@@ -6,6 +6,7 @@ module Sequent.Theorem
 
 import           Sequent.Env (Env, Variable, evalEnv, fresh)
 
+-- TODO: add existential quantifier and and
 data TheoremAtom
     = ForAll (Variable -> TheoremAtom)
     | Or TheoremAtom TheoremAtom
@@ -18,7 +19,7 @@ instance Eq TheoremAtom where
 instance Show TheoremAtom where
   show = evalEnv . showTheoremAtom
 
--- TODO: maybe wrap in a newtype? (or a record?)
+-- TODO: maybe wrap in a newtype? (or a record?) with monoid instance
 type Theorem = ([TheoremAtom], [TheoremAtom])
 
 -- TODO fix infix

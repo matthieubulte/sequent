@@ -35,10 +35,12 @@ instance Monoid Lines where
         | a == mempty = b
         | otherwise   = Lines (unLines a ++ "\n" ++ unLines b)
 
-
+-- Everything that is needed when checking a proof:
+--      + MaybeT to be able to terminate an incorrect proof
+--      + EnvT to generate fresh variables
+--      + WriterT to log the steps of the proof
 -- TODO replace MaybeT with some instance of MonadError ?
--- Everything that is needed when checking a proof
-newtype CheckT m a = CheckT { runCheckT :: MaybeT (EnvT (WriterT Lines m)) a }
+newtype CheckT m a = CheckT { runCheckT :: MaybeT (WriterT Lines (EnvT m)) a }
     deriving ( Functor
              , Applicative
              , Alternative
@@ -54,15 +56,17 @@ instance Monad m => MonadWriter String (CheckT m) where
     listen = CheckT . fmap (fmap unLines) . listen . runCheckT
     pass = CheckT . pass . fmap (fmap (\f -> Lines . f . unLines)) . runCheckT
 
+-- The MonadTrans instance can't be automatically derived because of the StateT
+-- in the EnvT. See (https://www.reddit.com/r/haskell/comments/3mrkwe/issue_deriving_monadtrans_for_chained_custom/)
 instance MonadTrans CheckT where
     lift = CheckT . lift . lift . lift
 
 evalCheckT :: (Monad m) => CheckT m a -> m (Maybe a, String)
-evalCheckT = fmap (fmap unLines) . runWriterT . evalEnvT . runMaybeT . runCheckT
+evalCheckT = fmap (fmap unLines) . evalEnvT . runWriterT . runMaybeT . runCheckT
 
 evalCheck :: Check a -> (Maybe a, String)
 evalCheck = runIdentity . evalCheckT
 
 -- TODO does this belong here / make sense?
 fresh' :: (Monad m) => CheckT m Variable
-fresh' = (CheckT . lift) fresh
+fresh' = (CheckT . lift . lift) fresh
