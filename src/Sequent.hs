@@ -34,3 +34,12 @@ proofTrivialOr :: Proof
 proofTrivialOr = orElimLeft leftOrElimRight rightOrElimRight
 
 checkTrivialOr = runProof trivialOr proofTrivialOr
+
+
+orCommutative :: (Variable, Variable) -> Theorem
+orCommutative (a, b) = [Var a `Or` Var b] |- [Var b `Or` Var a]
+
+proofOrCommutative :: Proof
+proofOrCommutative = orElimLeft rightOrElimRight leftOrElimRight
+
+checkOrCommutative = runProof orCommutative proofOrCommutative
