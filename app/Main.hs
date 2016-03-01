@@ -1,16 +1,17 @@
 module Main where
 
-import           Sequent (checkExcludedMiddle, checkTrivialOr)
+import           Sequent (checkExcludedMiddle, checkOrCommutative,
+                          checkTrivialOr)
 
-main :: IO ()
-main = do
-    let (result, trace) = checkTrivialOr
-    let (result', trace') = checkExcludedMiddle
-
-    putStrLn ("Trivial or success: " ++ maybe "No" (const "Yes") result)
+showCheck :: String -> (Maybe (), String) -> IO ()
+showCheck theorem (result, trace) = do
+    putStrLn ("'" ++ theorem ++ "' success: " ++ maybe "No" (const "Yes") result)
     putStrLn ("Trace:\n" ++ trace)
 
     putStrLn "--------------------------------"
 
-    putStrLn ("Excluded middle success: " ++ maybe "No" (const "Yes") result')
-    putStrLn ("Trace:\n" ++ trace')
+main :: IO ()
+main = do
+    showCheck "excluded middle" checkExcludedMiddle
+    showCheck "trivial or" checkTrivialOr
+    showCheck "or commutativity" checkOrCommutative
