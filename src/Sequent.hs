@@ -9,9 +9,12 @@ import           Sequent.Introduce
 import           Sequent.ProofTerm
 import           Sequent.Theorem
 
+import           Control.Arrow     ((&&&))
+
 -- TODO Move me :()
-runProof :: Introduce a => (a -> Judgment) -> Proof -> (Maybe (), String)
-runProof judgment proof = evalCheck (check proof (runIntros judgment))
+runProof :: Introduce a => (a -> (Judgment, Proof)) -> (Maybe (), String)
+runProof judgmentProof = let (judgment, proof) = runIntros judgmentProof
+                         in evalCheck (check proof judgment)
 
 excludedMiddle :: Variable -> Judgment
 excludedMiddle a = [] |- [Var a `Or` Not (Var a)]
@@ -24,7 +27,7 @@ proofExcludedMiddle
      <> orElimRightSuccedent
      <> negationSuccedent
 
-checkExcludedMiddle = runProof excludedMiddle proofExcludedMiddle
+checkExcludedMiddle = runProof (excludedMiddle &&& const proofExcludedMiddle)
 
 
 trivialOr :: (Variable, Variable) -> Judgment
@@ -33,7 +36,7 @@ trivialOr (a, b) = [Var a `Or` Var b] |- [Var a `Or` Var b]
 proofTrivialOr :: Proof
 proofTrivialOr = orElimAntecedent orElimLeftSuccedent orElimRightSuccedent
 
-checkTrivialOr = runProof trivialOr proofTrivialOr
+checkTrivialOr = runProof (trivialOr &&& const proofTrivialOr)
 
 
 orCommutative :: (Variable, Variable) -> Judgment
@@ -42,7 +45,7 @@ orCommutative (a, b) = [Var a `Or` Var b] |- [Var b `Or` Var a]
 proofOrCommutative :: Proof
 proofOrCommutative = orElimAntecedent orElimRightSuccedent orElimLeftSuccedent
 
-checkOrCommutative = runProof orCommutative proofOrCommutative
+checkOrCommutative = runProof (orCommutative &&& const proofOrCommutative)
 
 
 deMorganOr :: (Variable, Variable) -> Judgment
@@ -54,7 +57,7 @@ proofDeMorganOr = negationAntecedent
                     (permuteSuccedent <> orElimLeftSuccedent <> negationSuccedent)
                     (permuteSuccedent <> orElimRightSuccedent <> negationSuccedent)
 
-checkDeMorganOr = runProof deMorganOr proofDeMorganOr
+checkDeMorganOr = runProof (deMorganOr &&& const proofDeMorganOr)
 
 
 deMorganAnd :: (Variable, Variable) -> Judgment
@@ -67,4 +70,4 @@ proofDeMorganAnd = negationAntecedent
                     (negationSuccedent <> orElimLeftSuccedent)
                     (negationSuccedent <> orElimRightSuccedent)
 
-checkDeMorganAnd = runProof deMorganAnd proofDeMorganAnd
+checkDeMorganAnd = runProof (deMorganAnd &&& const proofDeMorganAnd)

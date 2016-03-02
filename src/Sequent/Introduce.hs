@@ -10,6 +10,9 @@ import           Sequent.Theorem (Theorem)
 class Introduce a where
   introduce :: (Monad m) => EnvT m a
 
+instance Introduce () where
+  introduce = return ()
+
 instance Introduce Variable where
     introduce = fresh
 

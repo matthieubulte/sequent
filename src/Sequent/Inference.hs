@@ -35,12 +35,15 @@ check = runRule $ Rule logStep
               <|> Rule iAxiom
               <|> Rule iContractionSuccedent
               <|> Rule iForAllSuccedent
+              <|> Rule iForAllAntecedent
               <|> Rule iOrElimLeftSuccedent
               <|> Rule iOrElimRightSuccedent
               <|> Rule iNegationSuccedent
               <|> Rule iNegationAntecedent
               <|> Rule iOrElimAntecedent
               <|> Rule iAndElimSuccedent
+              <|> Rule iAndElimRightAntecedent
+              <|> Rule iAndElimLeftAntecedent
               <|> Rule iPermuteSuccedent
               <|> Rule iPermuteAntecedent
 
@@ -73,6 +76,16 @@ iForAllSuccedent (P.ForAllSuccedent:rest) (gamma, T.ForAll f:delta) = do
     y <- fresh'
     check rest (gamma, f y:delta)
 iForAllSuccedent _ _ = mzero
+
+{-
+     Gamma, A[y/x] |- Delta
+-------------------------------- forall right
+   Gamma |- forall x. A, Delta
+-}
+iForAllAntecedent :: InferenceRule
+iForAllAntecedent (P.ForAllAntecedent y:rest) (gamma, T.ForAll f:delta) =
+    check rest (gamma, f y:delta)
+iForAllAntecedent _ _ = mzero
 
 {-
        Gamma |- A, Delta
@@ -135,6 +148,26 @@ iAndElimSuccedent [P.AndElimSuccedent aProof bProof] (gammaSigma, T.And a b:delt
     check aProof (gammaSigma, a:deltaPi)
     check bProof (gammaSigma, b:deltaPi)
 iAndElimSuccedent _ _ = mzero
+
+{-
+    Gamma, A |- Delta
+------------------------- left left and
+   Gamma, A, B |- Delta
+-}
+iAndElimLeftAntecedent :: InferenceRule
+iAndElimLeftAntecedent (P.AndElimLeftAntecedent:rest) (T.And a b:gamma, delta) =
+    check rest (a:gamma, delta)
+iAndElimLeftAntecedent _ _ = mzero
+
+{-
+    Gamma, B |- Delta
+------------------------- right left and
+   Gamma, A, B |- Delta
+-}
+iAndElimRightAntecedent :: InferenceRule
+iAndElimRightAntecedent (P.AndElimRightAntecedent:rest) (T.And a b:gamma, delta) =
+    check rest (b:gamma, delta)
+iAndElimRightAntecedent _ _ = mzero
 
 {-
     Gamma |- B, A, Delta

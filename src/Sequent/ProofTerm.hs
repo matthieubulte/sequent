@@ -1,20 +1,27 @@
 module Sequent.ProofTerm
     ( Step(..)
     , Proof
-    , contractionSuccedent, forAllSuccedent, orElimLeftSuccedent
-    , orElimRightSuccedent, negationSuccedent, negationAntecedent
-    , orElimAntecedent, andElimSuccedent, permuteSuccedent, permuteAntecedent
+    , contractionSuccedent, forAllSuccedent, forAllAntecedent
+    , orElimLeftSuccedent , orElimRightSuccedent, negationSuccedent
+    , negationAntecedent, orElimAntecedent, andElimSuccedent
+    , andElimLeftAntecedent, andElimRightAntecedent, permuteSuccedent
+    , permuteAntecedent
     ) where
+
+import           Sequent.Env (Variable)
 
 data Step
   = ContractionSuccedent
   | ForAllSuccedent
+  | ForAllAntecedent Variable
   | OrElimLeftSuccedent
   | OrElimRightSuccedent
   | NegationSuccedent
   | NegationAntecedent
   | OrElimAntecedent Proof Proof
   | AndElimSuccedent Proof Proof
+  | AndElimLeftAntecedent
+  | AndElimRightAntecedent
   | PermuteSuccedent
   | PermuteAntecedent
   deriving (Show, Eq)
@@ -28,6 +35,9 @@ contractionSuccedent = [ContractionSuccedent]
 
 forAllSuccedent :: Proof
 forAllSuccedent = [ForAllSuccedent]
+
+forAllAntecedent :: Variable -> Proof
+forAllAntecedent a = [ForAllAntecedent a]
 
 orElimLeftSuccedent :: Proof
 orElimLeftSuccedent = [OrElimLeftSuccedent]
@@ -46,6 +56,12 @@ orElimAntecedent l r = [OrElimAntecedent l r]
 
 andElimSuccedent :: Proof -> Proof -> Proof
 andElimSuccedent l r = [AndElimSuccedent l r]
+
+andElimLeftAntecedent :: Proof
+andElimLeftAntecedent = [AndElimLeftAntecedent]
+
+andElimRightAntecedent :: Proof
+andElimRightAntecedent = [AndElimRightAntecedent]
 
 permuteSuccedent :: Proof
 permuteSuccedent = [PermuteSuccedent]
