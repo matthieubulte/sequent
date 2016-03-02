@@ -40,6 +40,7 @@ check = runRule $ Rule logStep
               <|> Rule iNegationSuccedent
               <|> Rule iNegationAntecedent
               <|> Rule iOrElimAntecedent
+              <|> Rule iAndElimSuccedent
               <|> Rule iPermuteSuccedent
               <|> Rule iPermuteAntecedent
 
