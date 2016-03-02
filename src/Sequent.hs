@@ -8,7 +8,7 @@ import           Sequent.Check
 import           Sequent.Env
 import           Sequent.Inference
 import           Sequent.Introduce
-import           Sequent.ProofTerm
+import           Sequent.Proof
 import           Sequent.Theorem
 
 -- TODO Move me :()

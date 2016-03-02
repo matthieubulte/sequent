@@ -6,7 +6,7 @@ import           Control.Monad.Writer (tell)
 
 import           Sequent.Check        (Check, liftEnv)
 import           Sequent.Env          (fresh)
-import qualified Sequent.ProofTerm    as P
+import qualified Sequent.Proof    as P
 import qualified Sequent.Theorem      as T
 
 
