@@ -2,8 +2,8 @@ module Sequent.ProofTerm
     ( Step(..)
     , Proof
     , contractionSuccedent, forAllSuccedent, orElimLeftSuccedent
-    , orElimRightSuccedent, negationSuccedent, orElimAntecedent
-    , permuteSuccedent, permuteAntecedent
+    , orElimRightSuccedent, negationSuccedent, negationAntecedent
+    , orElimAntecedent, permuteSuccedent, permuteAntecedent
     ) where
 
 data Step
@@ -12,6 +12,7 @@ data Step
   | OrElimLeftSuccedent
   | OrElimRightSuccedent
   | NegationSuccedent
+  | NegationAntecedent
   | OrElimAntecedent Proof Proof
   | PermuteSuccedent
   | PermuteAntecedent
@@ -35,6 +36,9 @@ orElimRightSuccedent = [OrElimRightSuccedent]
 
 negationSuccedent :: Proof
 negationSuccedent = [NegationSuccedent]
+
+negationAntecedent :: Proof
+negationAntecedent = [NegationAntecedent]
 
 orElimAntecedent :: Proof -> Proof -> Proof
 orElimAntecedent l r = [OrElimAntecedent l r]

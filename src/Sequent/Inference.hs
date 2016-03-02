@@ -38,6 +38,7 @@ check = runRule $ Rule logStep
               <|> Rule iOrElimLeftSuccedent
               <|> Rule iOrElimRightSuccedent
               <|> Rule iNegationSuccedent
+              <|> Rule iNegationAntecedent
               <|> Rule iOrElimAntecedent
               <|> Rule iPermuteSuccedent
               <|> Rule iPermuteAntecedent
@@ -94,13 +95,23 @@ iOrElimRightSuccedent _ _ = mzero
 
 {-
    Gamma, A |- Delta
------------------------ left not
+----------------------- right not
    Gamma |- !A, Delta
 -}
 iNegationSuccedent :: InferenceRule
 iNegationSuccedent (P.NegationSuccedent:rest) (gamma, T.Not a:delta) =
     check rest (a:gamma, delta)
 iNegationSuccedent _ _ = mzero
+
+{-
+   Gamma |- A, Delta
+----------------------- left not
+   Gamma, !A |- Delta
+-}
+iNegationAntecedent :: InferenceRule
+iNegationAntecedent (P.NegationAntecedent:rest) (T.Not a:gamma, delta) =
+    check rest (gamma, a:delta)
+iNegationAntecedent _ _ = mzero
 
 {-
 Gamma, A |- Delta      Sigma, B |- Pi
