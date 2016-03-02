@@ -55,3 +55,16 @@ proofDeMorganOr = negationAntecedent
                     (permuteSuccedent <> orElimRightSuccedent <> negationSuccedent)
 
 checkDeMorganOr = runProof deMorganOr proofDeMorganOr
+
+
+deMorganAnd :: (Variable, Variable) -> Judgment
+deMorganAnd (a, b) = [Not (Var a `Or` Var b)] |- [Not (Var a) `And` Not (Var b)]
+
+proofDeMorganAnd :: Proof
+proofDeMorganAnd = negationAntecedent
+                <> permuteSuccedent
+                <> andElimSuccedent
+                    (negationSuccedent <> orElimLeftSuccedent)
+                    (negationSuccedent <> orElimRightSuccedent)
+
+checkDeMorganAnd = runProof deMorganAnd proofDeMorganAnd
