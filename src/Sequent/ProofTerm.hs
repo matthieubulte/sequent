@@ -3,7 +3,7 @@ module Sequent.ProofTerm
     , Proof
     , contractionSuccedent, forAllSuccedent, orElimLeftSuccedent
     , orElimRightSuccedent, negationSuccedent, negationAntecedent
-    , orElimAntecedent, permuteSuccedent, permuteAntecedent
+    , orElimAntecedent, andElimSuccedent, permuteSuccedent, permuteAntecedent
     ) where
 
 data Step
@@ -14,6 +14,7 @@ data Step
   | NegationSuccedent
   | NegationAntecedent
   | OrElimAntecedent Proof Proof
+  | AndElimSuccedent Proof Proof
   | PermuteSuccedent
   | PermuteAntecedent
   deriving (Show, Eq)
@@ -42,6 +43,9 @@ negationAntecedent = [NegationAntecedent]
 
 orElimAntecedent :: Proof -> Proof -> Proof
 orElimAntecedent l r = [OrElimAntecedent l r]
+
+andElimSuccedent :: Proof -> Proof -> Proof
+andElimSuccedent l r = [AndElimSuccedent l r]
 
 permuteSuccedent :: Proof
 permuteSuccedent = [PermuteSuccedent]

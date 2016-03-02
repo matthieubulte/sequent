@@ -114,15 +114,26 @@ iNegationAntecedent (P.NegationAntecedent:rest) (T.Not a:gamma, delta) =
 iNegationAntecedent _ _ = mzero
 
 {-
-Gamma, A |- Delta      Sigma, B |- Pi
-------------------------------------- left or
-  Gamma, Sigma, A v B |- Delta, Pi
+  Gamma, A |- Delta      Sigma, B |- Pi
+----------------------------------------- left or
+    Gamma, Sigma, A v B |- Delta, Pi
 -}
 iOrElimAntecedent :: InferenceRule
 iOrElimAntecedent [P.OrElimAntecedent aProof bProof] (T.Or a b:gammaSigma, deltaPi) = do
     check aProof (a:gammaSigma, deltaPi)
     check bProof (b:gammaSigma, deltaPi)
 iOrElimAntecedent _ _ = mzero
+
+{-
+  Gamma |- A, Delta      Sigma |- B, Pi
+----------------------------------------- right and
+    Gamma, Sigma |- A ^ B, Delta, Pi
+-}
+iAndElimSuccedent :: InferenceRule
+iAndElimSuccedent [P.AndElimSuccedent aProof bProof] (gammaSigma, T.And a b:deltaPi) = do
+    check aProof (gammaSigma, a:deltaPi)
+    check bProof (gammaSigma, b:deltaPi)
+iAndElimSuccedent _ _ = mzero
 
 {-
     Gamma |- B, A, Delta
