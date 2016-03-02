@@ -13,6 +13,9 @@ data Theorem
     | And Theorem Theorem
     | Not Theorem
     | Var Variable
+    | Pred1 Variable Variable             -- first variable is the predicate name
+    | Pred2 Variable (Variable, Variable) -- first variable is the predicate name
+    | PredN Variable [Variable]           -- first variable is the predicate name
 
 instance Eq Theorem where
   a == b = evalEnv (eqTheorem a b)
@@ -33,6 +36,9 @@ infixr |-
 
 eqTheorem :: Theorem -> Theorem -> Env Bool
 eqTheorem (Var x) (Var y) = return (x == y)
+eqTheorem (Pred1 p x) (Pred1 p' x') = return (p == p' && x == x')
+eqTheorem (Pred2 p xs) (Pred2 p' xs') = return (p == p' && xs == xs')
+eqTheorem (PredN p xs) (PredN p' xs') = return (p == p' && xs == xs')
 eqTheorem (Or l r) (Or l' r') = (&&) <$> eqTheorem l l' <*> eqTheorem r r'
 eqTheorem (And l r) (And l' r') = (&&) <$> eqTheorem l l' <*> eqTheorem r r'
 eqTheorem (Not t) (Not t') = eqTheorem t t'
@@ -58,3 +64,6 @@ showTheorem (Not t) = do
     st <- showTheorem t
     return ("!(" ++ st ++ ")")
 showTheorem (Var s) = return (show s)
+showTheorem (Pred1 p x) = return (show p ++ show x)
+showTheorem (Pred2 p xs) = return (show p ++ show xs)
+showTheorem (PredN p xs) = return (show p ++ show xs)

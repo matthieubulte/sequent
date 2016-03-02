@@ -8,7 +8,7 @@ module Sequent.Check
     , Check
     , evalCheck
     , evalCheckT
-    , fresh') where
+    , liftEnv) where
 
 import           Control.Applicative       (Alternative)
 import           Control.Monad             (MonadPlus)
@@ -67,6 +67,5 @@ evalCheckT = fmap (fmap unLines) . evalEnvT . runWriterT . runMaybeT . runCheckT
 evalCheck :: Check a -> (Maybe a, String)
 evalCheck = runIdentity . evalCheckT
 
--- TODO does this belong here / make sense?
-fresh' :: (Monad m) => CheckT m Variable
-fresh' = (CheckT . lift . lift) fresh
+liftEnv :: (Monad m) => EnvT m a -> CheckT m a
+liftEnv = CheckT . lift . lift

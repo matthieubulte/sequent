@@ -1,6 +1,9 @@
-module Sequent.Introduce (runIntros, Introduce) where
+module Sequent.Introduce
+    ( Introduce
+    , runIntros
+    ) where
 
-import           Sequent.Env     (EnvT, Variable, evalEnv, fresh)
+import           Sequent.Env     (EnvT, Variable, fresh)
 import           Sequent.Theorem (Theorem)
 
 -- Introduce represent a value that can be generated in an environment
@@ -23,5 +26,5 @@ instance (Introduce a, Introduce b, Introduce c) => Introduce (a, b, c) where
     introduce = (,,) <$> introduce <*> introduce <*> introduce
 
 -- Create the fresh variable required for a theorem to be expressed
-runIntros :: (Introduce a) => (a -> b) -> b
-runIntros f = evalEnv (f <$> introduce)
+runIntros :: (Monad m, Introduce a) => (a -> b) -> EnvT m b
+runIntros f = f <$> introduce

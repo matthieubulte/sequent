@@ -4,7 +4,8 @@ import           Control.Applicative  (Alternative, empty, (<|>))
 import           Control.Monad        (MonadPlus, guard, mzero)
 import           Control.Monad.Writer (tell)
 
-import           Sequent.Check        (Check, fresh')
+import           Sequent.Check        (Check, liftEnv)
+import           Sequent.Env          (fresh)
 import qualified Sequent.ProofTerm    as P
 import qualified Sequent.Theorem      as T
 
@@ -54,6 +55,9 @@ check = runRule $ Rule logStep
 -}
 iAxiom :: InferenceRule
 iAxiom [] (gammaA, a@(T.Var _):delta) = guard (a `elem` gammaA)
+iAxiom [] (gammaA, p@(T.Pred1 _ _):delta) = guard (p `elem` gammaA)
+iAxiom [] (gammaA, p@(T.Pred2 _ _):delta) = guard (p `elem` gammaA)
+iAxiom [] (gammaA, p@(T.PredN _ _):delta) = guard (p `elem` gammaA)
 iAxiom _ _ = mzero
 
 {-
@@ -72,9 +76,9 @@ iContractionSuccedent _ _ = mzero
    Gamma |- forall x. A, Delta
 -}
 iForAllSuccedent :: InferenceRule
-iForAllSuccedent (P.ForAllSuccedent:rest) (gamma, T.ForAll f:delta) = do
-    y <- fresh'
-    check rest (gamma, f y:delta)
+iForAllSuccedent [P.ForAllSuccedent t] (gamma, T.ForAll f:delta) = do
+    y <- liftEnv fresh
+    check (t y) (gamma, f y:delta)
 iForAllSuccedent _ _ = mzero
 
 {-
@@ -83,8 +87,8 @@ iForAllSuccedent _ _ = mzero
    Gamma |- forall x. A, Delta
 -}
 iForAllAntecedent :: InferenceRule
-iForAllAntecedent (P.ForAllAntecedent y:rest) (gamma, T.ForAll f:delta) =
-    check rest (gamma, f y:delta)
+iForAllAntecedent (P.ForAllAntecedent y:rest) (T.ForAll f:gamma, delta) =
+    check rest (f y:gamma, delta)
 iForAllAntecedent _ _ = mzero
 
 {-

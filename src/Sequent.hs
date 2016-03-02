@@ -1,6 +1,8 @@
 module Sequent where
 
-import           Data.Monoid       ((<>))
+import           Control.Arrow       ((&&&))
+import           Control.Monad.Trans (lift)
+import           Data.Monoid         ((<>))
 
 import           Sequent.Check
 import           Sequent.Env
@@ -9,12 +11,11 @@ import           Sequent.Introduce
 import           Sequent.ProofTerm
 import           Sequent.Theorem
 
-import           Control.Arrow     ((&&&))
-
 -- TODO Move me :()
 runProof :: Introduce a => (a -> (Judgment, Proof)) -> (Maybe (), String)
-runProof judgmentProof = let (judgment, proof) = runIntros judgmentProof
-                         in evalCheck (check proof judgment)
+runProof judgmentProof = evalCheck $ do
+    (judgment, proof) <- liftEnv (runIntros judgmentProof)
+    check proof judgment
 
 excludedMiddle :: Variable -> Judgment
 excludedMiddle a = [] |- [Var a `Or` Not (Var a)]
@@ -71,3 +72,14 @@ proofDeMorganAnd = negationAntecedent
                     (negationSuccedent <> orElimRightSuccedent)
 
 checkDeMorganAnd = runProof (deMorganAnd &&& const proofDeMorganAnd)
+
+nestedForAll :: Variable -> Judgment
+nestedForAll p = [ForAll $ \a -> ForAll $ \b -> Pred2 p (a, b)]
+              |- [ForAll $ \b -> ForAll $ \a -> Pred2 p (a, b)]
+
+proofNestedForAll :: Variable -> Proof
+proofNestedForAll p = forAllSuccedent $ \b ->
+                      forAllSuccedent $ \a ->
+                        forAllAntecedent a <> forAllAntecedent b
+
+checkNestedForAll = runProof (nestedForAll &&& proofNestedForAll)
