@@ -28,8 +28,7 @@ instance Alternative Rule where
 
 
 logStep :: InferenceRule
-logStep [] theorem = tell (show theorem) >> mzero
-logStep (step:_) theorem = tell (show (step, theorem)) >> mzero
+logStep step theorem = tell (show (step, theorem)) >> mzero
 
 check :: InferenceRule
 check = runRule $ Rule logStep
@@ -54,10 +53,10 @@ check = runRule $ Rule logStep
   Gamma, A |- A, Delta
 -}
 iAxiom :: InferenceRule
-iAxiom [] (gammaA, a@(T.Var _):delta) = guard (a `elem` gammaA)
-iAxiom [] (gammaA, p@(T.Pred1 _ _):delta) = guard (p `elem` gammaA)
-iAxiom [] (gammaA, p@(T.Pred2 _ _):delta) = guard (p `elem` gammaA)
-iAxiom [] (gammaA, p@(T.PredN _ _):delta) = guard (p `elem` gammaA)
+iAxiom P.Axiom (gammaA, a@(T.Var _):delta) = guard (a `elem` gammaA)
+iAxiom P.Axiom (gammaA, p@(T.Pred1 _ _):delta) = guard (p `elem` gammaA)
+iAxiom P.Axiom (gammaA, p@(T.Pred2 _ _):delta) = guard (p `elem` gammaA)
+iAxiom P.Axiom (gammaA, p@(T.PredN _ _):delta) = guard (p `elem` gammaA)
 iAxiom _ _ = mzero
 
 {-
@@ -66,7 +65,7 @@ iAxiom _ _ = mzero
     Gamma |- A, Delta
 -}
 iContractionSuccedent :: InferenceRule
-iContractionSuccedent (P.ContractionSuccedent:rest) (gamma, a:delta) =
+iContractionSuccedent (P.ContractionSuccedent rest) (gamma, a:delta) =
     check rest (gamma, a:a:delta)
 iContractionSuccedent _ _ = mzero
 
@@ -76,7 +75,7 @@ iContractionSuccedent _ _ = mzero
    Gamma |- forall x. A, Delta
 -}
 iForAllSuccedent :: InferenceRule
-iForAllSuccedent [P.ForAllSuccedent t] (gamma, T.ForAll f:delta) = do
+iForAllSuccedent (P.ForAllSuccedent t) (gamma, T.ForAll f:delta) = do
     y <- liftEnv fresh
     check (t y) (gamma, f y:delta)
 iForAllSuccedent _ _ = mzero
@@ -87,7 +86,7 @@ iForAllSuccedent _ _ = mzero
    Gamma |- forall x. A, Delta
 -}
 iForAllAntecedent :: InferenceRule
-iForAllAntecedent (P.ForAllAntecedent y:rest) (T.ForAll f:gamma, delta) =
+iForAllAntecedent (P.ForAllAntecedent y rest) (T.ForAll f:gamma, delta) =
     check rest (f y:gamma, delta)
 iForAllAntecedent _ _ = mzero
 
@@ -97,7 +96,7 @@ iForAllAntecedent _ _ = mzero
      Gamma |- A v B, Delta
 -}
 iOrElimLeftSuccedent :: InferenceRule
-iOrElimLeftSuccedent (P.OrElimLeftSuccedent:rest) (gamma, T.Or a b:delta) =
+iOrElimLeftSuccedent (P.OrElimLeftSuccedent rest) (gamma, T.Or a b:delta) =
     check rest (gamma, a:delta)
 iOrElimLeftSuccedent _ _ = mzero
 
@@ -107,7 +106,7 @@ iOrElimLeftSuccedent _ _ = mzero
     Gamma |- A v B, Delta
 -}
 iOrElimRightSuccedent :: InferenceRule
-iOrElimRightSuccedent (P.OrElimRightSuccedent:rest) (gamma, T.Or a b:delta) =
+iOrElimRightSuccedent (P.OrElimRightSuccedent rest) (gamma, T.Or a b:delta) =
     check rest (gamma, b:delta)
 iOrElimRightSuccedent _ _ = mzero
 
@@ -117,7 +116,7 @@ iOrElimRightSuccedent _ _ = mzero
    Gamma |- !A, Delta
 -}
 iNegationSuccedent :: InferenceRule
-iNegationSuccedent (P.NegationSuccedent:rest) (gamma, T.Not a:delta) =
+iNegationSuccedent (P.NegationSuccedent rest) (gamma, T.Not a:delta) =
     check rest (a:gamma, delta)
 iNegationSuccedent _ _ = mzero
 
@@ -127,7 +126,7 @@ iNegationSuccedent _ _ = mzero
    Gamma, !A |- Delta
 -}
 iNegationAntecedent :: InferenceRule
-iNegationAntecedent (P.NegationAntecedent:rest) (T.Not a:gamma, delta) =
+iNegationAntecedent (P.NegationAntecedent rest) (T.Not a:gamma, delta) =
     check rest (gamma, a:delta)
 iNegationAntecedent _ _ = mzero
 
@@ -137,7 +136,7 @@ iNegationAntecedent _ _ = mzero
     Gamma, Sigma, A v B |- Delta, Pi
 -}
 iOrElimAntecedent :: InferenceRule
-iOrElimAntecedent [P.OrElimAntecedent aProof bProof] (T.Or a b:gammaSigma, deltaPi) = do
+iOrElimAntecedent (P.OrElimAntecedent aProof bProof) (T.Or a b:gammaSigma, deltaPi) = do
     check aProof (a:gammaSigma, deltaPi)
     check bProof (b:gammaSigma, deltaPi)
 iOrElimAntecedent _ _ = mzero
@@ -148,7 +147,7 @@ iOrElimAntecedent _ _ = mzero
     Gamma, Sigma |- A ^ B, Delta, Pi
 -}
 iAndElimSuccedent :: InferenceRule
-iAndElimSuccedent [P.AndElimSuccedent aProof bProof] (gammaSigma, T.And a b:deltaPi) = do
+iAndElimSuccedent (P.AndElimSuccedent aProof bProof) (gammaSigma, T.And a b:deltaPi) = do
     check aProof (gammaSigma, a:deltaPi)
     check bProof (gammaSigma, b:deltaPi)
 iAndElimSuccedent _ _ = mzero
@@ -159,7 +158,7 @@ iAndElimSuccedent _ _ = mzero
    Gamma, A, B |- Delta
 -}
 iAndElimLeftAntecedent :: InferenceRule
-iAndElimLeftAntecedent (P.AndElimLeftAntecedent:rest) (T.And a b:gamma, delta) =
+iAndElimLeftAntecedent (P.AndElimLeftAntecedent rest) (T.And a b:gamma, delta) =
     check rest (a:gamma, delta)
 iAndElimLeftAntecedent _ _ = mzero
 
@@ -169,7 +168,7 @@ iAndElimLeftAntecedent _ _ = mzero
    Gamma, A, B |- Delta
 -}
 iAndElimRightAntecedent :: InferenceRule
-iAndElimRightAntecedent (P.AndElimRightAntecedent:rest) (T.And a b:gamma, delta) =
+iAndElimRightAntecedent (P.AndElimRightAntecedent rest) (T.And a b:gamma, delta) =
     check rest (b:gamma, delta)
 iAndElimRightAntecedent _ _ = mzero
 
@@ -179,7 +178,7 @@ iAndElimRightAntecedent _ _ = mzero
     Gamma |- A, B, Delta
 -}
 iPermuteSuccedent :: InferenceRule
-iPermuteSuccedent (P.PermuteSuccedent:rest) (gamma, a:b:delta) =
+iPermuteSuccedent (P.PermuteSuccedent rest) (gamma, a:b:delta) =
     check rest (gamma, b:a:delta)
 iPermuteSuccedent _ _ = mzero
 
@@ -189,6 +188,6 @@ iPermuteSuccedent _ _ = mzero
     Gamma, A, B |- Delta
 -}
 iPermuteAntecedent :: InferenceRule
-iPermuteAntecedent (P.PermuteAntecedent:rest) (a:b:gamma, delta) =
+iPermuteAntecedent (P.PermuteAntecedent rest) (a:b:gamma, delta) =
     check rest (b:a:gamma, delta)
 iPermuteAntecedent _ _ = mzero

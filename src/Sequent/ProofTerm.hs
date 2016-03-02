@@ -1,136 +1,84 @@
 module Sequent.ProofTerm
-    ( Step(..)
-    , Proof
-    , contractionSuccedent, forAllSuccedent, forAllAntecedent
-    , orElimLeftSuccedent , orElimRightSuccedent, negationSuccedent
-    , negationAntecedent, orElimAntecedent, andElimSuccedent
-    , andElimLeftAntecedent, andElimRightAntecedent, permuteSuccedent
-    , permuteAntecedent
+    ( Proof(..)
     ) where
 
+import           Control.Arrow ((&&&))
 import           Control.Monad (zipWithM)
 import           Data.List     (intercalate)
 
 import           Sequent.Env   (Env, Variable, evalEnv, fresh)
 
-data Step
-  = ContractionSuccedent
+data Proof
+  = ContractionSuccedent Proof
   | ForAllSuccedent (Variable -> Proof)
-  | ForAllAntecedent Variable
-  | OrElimLeftSuccedent
-  | OrElimRightSuccedent
-  | NegationSuccedent
-  | NegationAntecedent
+  | ForAllAntecedent Variable Proof
+  | OrElimLeftSuccedent Proof
+  | OrElimRightSuccedent Proof
+  | NegationSuccedent Proof
+  | NegationAntecedent Proof
   | OrElimAntecedent Proof Proof
   | AndElimSuccedent Proof Proof
-  | AndElimLeftAntecedent
-  | AndElimRightAntecedent
-  | PermuteSuccedent
-  | PermuteAntecedent
+  | AndElimLeftAntecedent Proof
+  | AndElimRightAntecedent Proof
+  | PermuteSuccedent Proof
+  | PermuteAntecedent Proof
+  | Axiom
 
-instance Eq Step where
-    a == b = evalEnv (eqStep a b)
+instance Eq Proof where
+    a == b = evalEnv (eqProofs a b)
 
-instance Show Step where
-    show = evalEnv . showStep
-
-type Proof = [Step]
+instance Show Proof where
+    show = evalEnv . showProof
 
 -- to show or test equality of two theorems we must be able to replace
 -- quantifiers with contrete variables in order to eliminate functions
 -- in our haskell representation of the theorem and explore the subtheorem
 
--- utility testing equality of two proof in a n
 eqProofs :: Proof -> Proof -> Env Bool
-eqProofs a b = and <$> zipWithM eqStep a b
-
-eqStep :: Step -> Step -> Env Bool
-eqStep ContractionSuccedent ContractionSuccedent     = return True
-eqStep (ForAllAntecedent a) (ForAllAntecedent a')    = return (a == a')
-eqStep OrElimLeftSuccedent OrElimLeftSuccedent       = return True
-eqStep OrElimRightSuccedent OrElimRightSuccedent     = return True
-eqStep NegationSuccedent NegationSuccedent           = return True
-eqStep NegationAntecedent NegationAntecedent         = return True
-eqStep AndElimLeftAntecedent AndElimLeftAntecedent   = return True
-eqStep AndElimRightAntecedent AndElimRightAntecedent = return True
-eqStep PermuteSuccedent PermuteSuccedent             = return True
-eqStep PermuteAntecedent PermuteAntecedent           = return True
-eqStep (ForAllSuccedent f) (ForAllSuccedent f') = do
-    x <- fresh
-    eqProofs (f x) (f' x)
-eqStep (OrElimAntecedent l r) (OrElimAntecedent l' r') =
+eqProofs Axiom Axiom = return True
+eqProofs (ContractionSuccedent s)   (ContractionSuccedent s')   = eqProofs s s'
+eqProofs (OrElimLeftSuccedent s)    (OrElimLeftSuccedent s')    = eqProofs s s'
+eqProofs (OrElimRightSuccedent s)   (OrElimRightSuccedent s')   = eqProofs s s'
+eqProofs (NegationSuccedent s)      (NegationSuccedent s')      = eqProofs s s'
+eqProofs (NegationAntecedent s)     (NegationAntecedent s')     = eqProofs s s'
+eqProofs (AndElimLeftAntecedent s)  (AndElimLeftAntecedent s')  = eqProofs s s'
+eqProofs (AndElimRightAntecedent s) (AndElimRightAntecedent s') = eqProofs s s'
+eqProofs (PermuteSuccedent s)       (PermuteSuccedent s')       = eqProofs s s'
+eqProofs (PermuteAntecedent s)      (PermuteAntecedent s')      = eqProofs s s'
+eqProofs (ForAllAntecedent a s)     (ForAllAntecedent a' s')    =
+    (a == a' &&) <$> eqProofs s s'
+eqProofs (ForAllSuccedent f) (ForAllSuccedent f') =
+    fresh >>= uncurry eqProofs . (f &&& f')
+eqProofs (OrElimAntecedent l r) (OrElimAntecedent l' r') =
     (&&) <$> eqProofs l l' <*> eqProofs r r'
-eqStep (AndElimSuccedent l r) (AndElimSuccedent l' r') =
+eqProofs (AndElimSuccedent l r) (AndElimSuccedent l' r') =
     (&&) <$> eqProofs l l' <*> eqProofs r r'
-eqStep _ _ = return False
+eqProofs _ _ = return False
 
-showProofs :: Proof -> Env String
-showProofs p = do
-    s <- mapM showStep p
-    return (intercalate ", " s)
+thenShow :: String -> Proof -> Env String
+thenShow s p = ((s ++ "\n") ++) <$> showProof p
 
-showStep :: Step -> Env String
-showStep ContractionSuccedent   = return "ContractionSuccedent"
-showStep (ForAllAntecedent a)   = return ("ForAllAntecedent " ++ show a)
-showStep OrElimLeftSuccedent    = return "OrElimLeftSuccedent"
-showStep OrElimRightSuccedent   = return "OrElimRightSuccedent"
-showStep NegationSuccedent      = return "NegationSuccedent"
-showStep NegationAntecedent     = return "NegationAntecedent"
-showStep AndElimLeftAntecedent  = return "AndElimLeftAntecedent"
-showStep AndElimRightAntecedent = return "AndElimRightAntecedent"
-showStep PermuteSuccedent       = return "PermuteSuccedent"
-showStep PermuteAntecedent      = return "PermuteAntecedent"
-showStep (ForAllSuccedent f) = do
-    x <- fresh
-    t <- showProofs (f x)
-    return $ "ForAllSuccedent (" ++ show x ++ " -> " ++ t ++ ")"
-showStep (OrElimAntecedent l r) = do
-    showL <- showProofs l
-    showR <- showProofs r
+showProof :: Proof -> Env String
+showProof Axiom                      = return "Axiom"
+showProof (ContractionSuccedent s)   = "ContractionSuccedent"          `thenShow` s
+showProof (ForAllAntecedent a s)     = ("ForAllAntecedent " ++ show a) `thenShow` s
+showProof (OrElimLeftSuccedent s)    = "OrElimLeftSuccedent"           `thenShow` s
+showProof (OrElimRightSuccedent s)   = "OrElimRightSuccedent"          `thenShow` s
+showProof (NegationSuccedent s)      = "NegationSuccedent"             `thenShow` s
+showProof (NegationAntecedent s)     = "NegationAntecedent"            `thenShow` s
+showProof (AndElimLeftAntecedent s)  = "AndElimLeftAntecedent"         `thenShow` s
+showProof (AndElimRightAntecedent s) = "AndElimRightAntecedent"        `thenShow` s
+showProof (PermuteSuccedent s)       = "PermuteSuccedent"              `thenShow` s
+showProof (PermuteAntecedent s)      = "PermuteAntecedent"             `thenShow` s
+showProof (ForAllSuccedent f) = do
+    x      <- fresh
+    shownF <- showProof (f x)
+    return $ "ForAllSuccedent (" ++ show x ++ " -> " ++ shownF ++ ")"
+showProof (OrElimAntecedent l r) = do
+    showL <- showProof l
+    showR <- showProof r
     return ("OrElimAntecedent (" ++ showL ++ ") (" ++ showR ++ ")")
-showStep (AndElimSuccedent l r) =  do
-    showL <- showProofs l
-    showR <- showProofs r
+showProof (AndElimSuccedent l r) =  do
+    showL <- showProof l
+    showR <- showProof r
     return ("AndElimSuccedent (" ++ showL ++ ") (" ++ showR ++ ")")
-
-
--- helpers
-
-contractionSuccedent :: Proof
-contractionSuccedent = [ContractionSuccedent]
-
-forAllSuccedent :: (Variable -> Proof) -> Proof
-forAllSuccedent f = [ForAllSuccedent f]
-
-forAllAntecedent :: Variable -> Proof
-forAllAntecedent a = [ForAllAntecedent a]
-
-orElimLeftSuccedent :: Proof
-orElimLeftSuccedent = [OrElimLeftSuccedent]
-
-orElimRightSuccedent :: Proof
-orElimRightSuccedent = [OrElimRightSuccedent]
-
-negationSuccedent :: Proof
-negationSuccedent = [NegationSuccedent]
-
-negationAntecedent :: Proof
-negationAntecedent = [NegationAntecedent]
-
-orElimAntecedent :: Proof -> Proof -> Proof
-orElimAntecedent l r = [OrElimAntecedent l r]
-
-andElimSuccedent :: Proof -> Proof -> Proof
-andElimSuccedent l r = [AndElimSuccedent l r]
-
-andElimLeftAntecedent :: Proof
-andElimLeftAntecedent = [AndElimLeftAntecedent]
-
-andElimRightAntecedent :: Proof
-andElimRightAntecedent = [AndElimRightAntecedent]
-
-permuteSuccedent :: Proof
-permuteSuccedent = [PermuteSuccedent]
-
-permuteAntecedent :: Proof
-permuteAntecedent = [PermuteAntecedent]
