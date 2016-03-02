@@ -40,6 +40,7 @@ check = runRule $ Rule logStep
               <|> Rule iNegationRight
               <|> Rule iOrElimLeft
               <|> Rule iPermuteRight
+              <|> Rule iPermuteLeft
 
 {-
 
@@ -47,7 +48,7 @@ check = runRule $ Rule logStep
   Gamma, A |- A, Delta
 -}
 iAxiom :: InferenceRule
-iAxiom [] (gammaA, a:delta) = guard (a `elem` gammaA)
+iAxiom [] (gammaA, a@(T.Var _):delta) = guard (a `elem` gammaA)
 iAxiom _ _ = mzero
 
 {-
@@ -110,6 +111,16 @@ iPermuteRight :: InferenceRule
 iPermuteRight (P.PermuteRight:rest) (gamma, a:b:delta) =
     check rest (gamma, b:a:delta)
 iPermuteRight _ _ = mzero
+
+{-
+    Gamma, B, A |- Delta
+--------------------------- right permute
+    Gamma, A, B |- Delta
+-}
+iPermuteLeft :: InferenceRule
+iPermuteLeft (P.PermuteLeft:rest) (a:b:gamma, delta) =
+    check rest (b:a:gamma, delta)
+iPermuteLeft _ _ = mzero
 
 {-
 Gamma, A |- Delta      Sigma, B |- Pi

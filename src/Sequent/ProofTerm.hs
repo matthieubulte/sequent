@@ -2,7 +2,7 @@ module Sequent.ProofTerm
     ( Step(..)
     , Proof
     , forAllRight, contractionRight, leftOrElimRight, rightOrElimRight
-    , permuteRight, negationRight, orElimLeft
+    , permuteRight, permuteLeft, negationRight, orElimLeft
     ) where
 
 data Step
@@ -12,6 +12,7 @@ data Step
   | RightOrElimRight
   | NegationRight
   | PermuteRight
+  | PermuteLeft
   | OrElimLeft Proof Proof
   deriving (Show, Eq)
 
@@ -33,6 +34,9 @@ rightOrElimRight = [RightOrElimRight]
 
 permuteRight :: Proof
 permuteRight = [PermuteRight]
+
+permuteLeft :: Proof
+permuteLeft = [PermuteLeft]
 
 negationRight :: Proof
 negationRight = [NegationRight]
