@@ -18,11 +18,11 @@ excludedMiddle a = [] |- [Var a `Or` Not (Var a)]
 
 proofExcludedMiddle :: Proof
 proofExcludedMiddle
-      = contractionRight
-     <> leftOrElimRight
-     <> permuteRight
-     <> rightOrElimRight
-     <> negationRight
+      = contractionSuccedent
+     <> orElimLeftSuccedent
+     <> permuteSuccedent
+     <> orElimRightSuccedent
+     <> negationSuccedent
 
 checkExcludedMiddle = runProof excludedMiddle proofExcludedMiddle
 
@@ -31,7 +31,7 @@ trivialOr :: (Variable, Variable) -> Theorem
 trivialOr (a, b) = [Var a `Or` Var b] |- [Var a `Or` Var b]
 
 proofTrivialOr :: Proof
-proofTrivialOr = orElimLeft leftOrElimRight rightOrElimRight
+proofTrivialOr = orElimAntecedent orElimLeftSuccedent orElimRightSuccedent
 
 checkTrivialOr = runProof trivialOr proofTrivialOr
 
@@ -40,6 +40,6 @@ orCommutative :: (Variable, Variable) -> Theorem
 orCommutative (a, b) = [Var a `Or` Var b] |- [Var b `Or` Var a]
 
 proofOrCommutative :: Proof
-proofOrCommutative = orElimLeft rightOrElimRight leftOrElimRight
+proofOrCommutative = orElimAntecedent orElimRightSuccedent orElimLeftSuccedent
 
 checkOrCommutative = runProof orCommutative proofOrCommutative

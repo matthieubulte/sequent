@@ -1,45 +1,46 @@
 module Sequent.ProofTerm
     ( Step(..)
     , Proof
-    , forAllRight, contractionRight, leftOrElimRight, rightOrElimRight
-    , permuteRight, permuteLeft, negationRight, orElimLeft
+    , contractionSuccedent, forAllSuccedent, orElimLeftSuccedent
+    , orElimRightSuccedent, negationSuccedent, orElimAntecedent
+    , permuteSuccedent, permuteAntecedent
     ) where
 
 data Step
-  = ForAllRight
-  | ContractionRight
-  | LeftOrElimRight
-  | RightOrElimRight
-  | NegationRight
-  | PermuteRight
-  | PermuteLeft
-  | OrElimLeft Proof Proof
+  = ContractionSuccedent
+  | ForAllSuccedent
+  | OrElimLeftSuccedent
+  | OrElimRightSuccedent
+  | NegationSuccedent
+  | OrElimAntecedent Proof Proof
+  | PermuteSuccedent
+  | PermuteAntecedent
   deriving (Show, Eq)
 
 type Proof = [Step]
 
 -- helpers
 
-forAllRight :: Proof
-forAllRight = [ForAllRight]
+contractionSuccedent :: Proof
+contractionSuccedent = [ContractionSuccedent]
 
-contractionRight :: Proof
-contractionRight = [ContractionRight]
+forAllSuccedent :: Proof
+forAllSuccedent = [ForAllSuccedent]
 
-leftOrElimRight :: Proof
-leftOrElimRight = [LeftOrElimRight]
+orElimLeftSuccedent :: Proof
+orElimLeftSuccedent = [OrElimLeftSuccedent]
 
-rightOrElimRight :: Proof
-rightOrElimRight = [RightOrElimRight]
+orElimRightSuccedent :: Proof
+orElimRightSuccedent = [OrElimRightSuccedent]
 
-permuteRight :: Proof
-permuteRight = [PermuteRight]
+negationSuccedent :: Proof
+negationSuccedent = [NegationSuccedent]
 
-permuteLeft :: Proof
-permuteLeft = [PermuteLeft]
+orElimAntecedent :: Proof -> Proof -> Proof
+orElimAntecedent l r = [OrElimAntecedent l r]
 
-negationRight :: Proof
-negationRight = [NegationRight]
+permuteSuccedent :: Proof
+permuteSuccedent = [PermuteSuccedent]
 
-orElimLeft :: Proof -> Proof -> Proof
-orElimLeft l r = [OrElimLeft l r]
+permuteAntecedent :: Proof
+permuteAntecedent = [PermuteAntecedent]
