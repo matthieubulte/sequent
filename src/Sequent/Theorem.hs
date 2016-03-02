@@ -10,6 +10,7 @@ import           Sequent.Env (Env, Variable, evalEnv, fresh)
 data Theorem
     = ForAll (Variable -> Theorem)
     | Or Theorem Theorem
+    | And Theorem Theorem
     | Not Theorem
     | Var Variable
 
@@ -33,6 +34,7 @@ infixr |-
 eqTheorem :: Theorem -> Theorem -> Env Bool
 eqTheorem (Var x) (Var y) = return (x == y)
 eqTheorem (Or l r) (Or l' r') = (&&) <$> eqTheorem l l' <*> eqTheorem r r'
+eqTheorem (And l r) (And l' r') = (&&) <$> eqTheorem l l' <*> eqTheorem r r'
 eqTheorem (Not t) (Not t') = eqTheorem t t'
 eqTheorem (ForAll f) (ForAll f') = do
   x <- fresh
@@ -48,6 +50,10 @@ showTheorem (Or l r) = do
     sl <- showTheorem l
     sr <- showTheorem r
     return (sl ++ " \\/ " ++ sr)
+showTheorem (And l r) = do
+    sl <- showTheorem l
+    sr <- showTheorem r
+    return (sl ++ "/\\ " ++ sr)
 showTheorem (Not t) = do
     st <- showTheorem t
     return ("!(" ++ st ++ ")")
