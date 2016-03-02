@@ -20,5 +20,5 @@ instance (Introduce a, Introduce b, Introduce c) => Introduce (a, b, c) where
     introduce = (,,) <$> introduce <*> introduce <*> introduce
 
 -- Create the fresh variable required for a theorem to be expressed
-runIntros :: (Introduce a) => (a -> Theorem) -> Theorem
-runIntros theorem = evalEnv (theorem <$> introduce)
+runIntros :: (Introduce a) => (a -> b) -> b
+runIntros f = evalEnv (f <$> introduce)

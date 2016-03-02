@@ -1,26 +1,26 @@
 module Sequent.Theorem
-    ( TheoremAtom(..)
-    , Theorem
+    ( Theorem(..)
+    , Judgment
     , (|-)
     ) where
 
 import           Sequent.Env (Env, Variable, evalEnv, fresh)
 
 -- TODO: add existential quantifier and and
-data TheoremAtom
-    = ForAll (Variable -> TheoremAtom)
-    | Or TheoremAtom TheoremAtom
-    | Not TheoremAtom
+data Theorem
+    = ForAll (Variable -> Theorem)
+    | Or Theorem Theorem
+    | Not Theorem
     | Var Variable
 
-instance Eq TheoremAtom where
-  a == b = evalEnv (eqTheoremAtom a b)
+instance Eq Theorem where
+  a == b = evalEnv (eqTheorem a b)
 
-instance Show TheoremAtom where
-  show = evalEnv . showTheoremAtom
+instance Show Theorem where
+  show = evalEnv . showTheorem
 
 -- TODO: maybe wrap in a newtype? (or a record?) with monoid instance
-type Theorem = ([TheoremAtom], [TheoremAtom])
+type Judgment = ([Theorem], [Theorem])
 
 -- TODO fix infix
 infixr |-
@@ -30,25 +30,25 @@ infixr |-
 -- quantifiers with contrete variables in order to eliminate functions
 -- in our haskell representation of the theorem and explore the subtheorem
 
-eqTheoremAtom :: TheoremAtom -> TheoremAtom -> Env Bool
-eqTheoremAtom (Var x) (Var y) = return (x == y)
-eqTheoremAtom (Or l r) (Or l' r') = return (l == l' && r == r')
-eqTheoremAtom (Not t) (Not t') = return (t == t')
-eqTheoremAtom (ForAll f) (ForAll f') = do
+eqTheorem :: Theorem -> Theorem -> Env Bool
+eqTheorem (Var x) (Var y) = return (x == y)
+eqTheorem (Or l r) (Or l' r') = (&&) <$> eqTheorem l l' <*> eqTheorem r r'
+eqTheorem (Not t) (Not t') = eqTheorem t t'
+eqTheorem (ForAll f) (ForAll f') = do
   x <- fresh
-  eqTheoremAtom (f x) (f' x)
-eqTheoremAtom _ _ = return False
+  eqTheorem (f x) (f' x)
+eqTheorem _ _ = return False
 
-showTheoremAtom :: TheoremAtom -> Env String
-showTheoremAtom (ForAll f) = do
+showTheorem :: Theorem -> Env String
+showTheorem (ForAll f) = do
     x <- fresh
-    t <- showTheoremAtom (f x)
+    t <- showTheorem (f x)
     return ("forall " ++ show x ++ ". " ++ t)
-showTheoremAtom (Or l r) = do
-    sl <- showTheoremAtom l
-    sr <- showTheoremAtom r
+showTheorem (Or l r) = do
+    sl <- showTheorem l
+    sr <- showTheorem r
     return (sl ++ " \\/ " ++ sr)
-showTheoremAtom (Not t) = do
-    st <- showTheoremAtom t
+showTheorem (Not t) = do
+    st <- showTheorem t
     return ("!(" ++ st ++ ")")
-showTheoremAtom (Var s) = return (show s)
+showTheorem (Var s) = return (show s)

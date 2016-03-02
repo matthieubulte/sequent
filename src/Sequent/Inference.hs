@@ -11,7 +11,7 @@ import qualified Sequent.Theorem      as T
 
 -- TODO this seems to be a lot of work just to have monoidal functions
 newtype Rule a = Rule { runRule :: IRule a }
-type IRule a = (P.Proof -> T.Theorem -> Check a)
+type IRule a = (P.Proof -> T.Judgment -> Check a)
 type InferenceRule = IRule ()
 
 instance Functor Rule where
