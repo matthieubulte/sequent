@@ -22,6 +22,8 @@ data Proof
   | AndElimRightAntecedent Proof
   | PermuteSuccedent Proof
   | PermuteAntecedent Proof
+  | ImplicationSuccedent Proof
+  | ImplicationAntecedent Proof Proof
   | Axiom
 
 instance Eq Proof where
@@ -34,6 +36,9 @@ instance Show Proof where
 -- quantifiers with contrete variables in order to eliminate functions
 -- in our haskell representation of the theorem and explore the subtheorem
 
+eqBranch :: Proof -> Proof -> Proof -> Proof -> Env Bool
+eqBranch l r l' r' = (&&) <$> eqProofs l l' <*> eqProofs r r'
+
 eqProofs :: Proof -> Proof -> Env Bool
 eqProofs Axiom Axiom = return True
 eqProofs (ContractionSuccedent s)   (ContractionSuccedent s')   = eqProofs s s'
@@ -45,18 +50,24 @@ eqProofs (AndElimLeftAntecedent s)  (AndElimLeftAntecedent s')  = eqProofs s s'
 eqProofs (AndElimRightAntecedent s) (AndElimRightAntecedent s') = eqProofs s s'
 eqProofs (PermuteSuccedent s)       (PermuteSuccedent s')       = eqProofs s s'
 eqProofs (PermuteAntecedent s)      (PermuteAntecedent s')      = eqProofs s s'
+eqProofs (ImplicationSuccedent s)   (ImplicationSuccedent s')   = eqProofs s s'
 eqProofs (ForAllAntecedent a s)     (ForAllAntecedent a' s')    =
     (a == a' &&) <$> eqProofs s s'
 eqProofs (ForAllSuccedent f) (ForAllSuccedent f') =
     fresh >>= uncurry eqProofs . (f &&& f')
-eqProofs (OrElimAntecedent l r) (OrElimAntecedent l' r') =
-    (&&) <$> eqProofs l l' <*> eqProofs r r'
-eqProofs (AndElimSuccedent l r) (AndElimSuccedent l' r') =
-    (&&) <$> eqProofs l l' <*> eqProofs r r'
+eqProofs (OrElimAntecedent l r)      (OrElimAntecedent l' r')      = eqBranch l r l' r'
+eqProofs (AndElimSuccedent l r)      (AndElimSuccedent l' r')      = eqBranch l r l' r'
+eqProofs (ImplicationAntecedent l r) (ImplicationAntecedent l' r') = eqBranch l r l' r'
 eqProofs _ _ = return False
 
 thenShow :: String -> Proof -> Env String
 thenShow s p = ((s ++ "\n") ++) <$> showProof p
+
+showBranch :: String -> Proof -> Proof -> Env String
+showBranch s l r = do
+    showL <- showProof l
+    showR <- showProof r
+    return (s ++ " (" ++ showL ++ ") (" ++ showR ++ ")")
 
 showProof :: Proof -> Env String
 showProof Axiom                      = return "Axiom"
@@ -70,15 +81,11 @@ showProof (AndElimLeftAntecedent s)  = "AndElimLeftAntecedent"         `thenShow
 showProof (AndElimRightAntecedent s) = "AndElimRightAntecedent"        `thenShow` s
 showProof (PermuteSuccedent s)       = "PermuteSuccedent"              `thenShow` s
 showProof (PermuteAntecedent s)      = "PermuteAntecedent"             `thenShow` s
+showProof (ImplicationSuccedent s)   = "ImplicationSuccedent"          `thenShow` s
 showProof (ForAllSuccedent f) = do
     x      <- fresh
     shownF <- showProof (f x)
     return $ "ForAllSuccedent (" ++ show x ++ " -> " ++ shownF ++ ")"
-showProof (OrElimAntecedent l r) = do
-    showL <- showProof l
-    showR <- showProof r
-    return ("OrElimAntecedent (" ++ showL ++ ") (" ++ showR ++ ")")
-showProof (AndElimSuccedent l r) =  do
-    showL <- showProof l
-    showR <- showProof r
-    return ("AndElimSuccedent (" ++ showL ++ ") (" ++ showR ++ ")")
+showProof (OrElimAntecedent l r) = showBranch "OrElimAntecedent" l r
+showProof (AndElimSuccedent l r) =  showBranch "AndElimSuccedent" l r
+showProof (ImplicationAntecedent l r) = showBranch "ImplicationAntecedent" l r

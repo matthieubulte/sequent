@@ -36,7 +36,7 @@ trivialOr (a, b) = [Var a `Or` Var b] |- [Var a `Or` Var b]
 
 proofTrivialOr :: Proof
 proofTrivialOr = OrElimAntecedent
-                    ( OrElimLeftSuccedent Axiom)
+                    (OrElimLeftSuccedent Axiom)
                     (OrElimRightSuccedent Axiom)
 
 checkTrivialOr = runProof (trivialOr &&& const proofTrivialOr)

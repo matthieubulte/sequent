@@ -6,12 +6,15 @@ module Sequent.Theorem
 
 import           Sequent.Env (Env, Variable, evalEnv, fresh)
 
--- TODO: add existential quantifier and and
+infix :->
+
+-- TODO: add missing stuff
 data Theorem
     = ForAll (Variable -> Theorem)
     | Or Theorem Theorem
     | And Theorem Theorem
     | Not Theorem
+    | Theorem :-> Theorem
     | Var Variable
     | Pred1 Variable Variable             -- first variable is the predicate name
     | Pred2 Variable (Variable, Variable) -- first variable is the predicate name
@@ -42,6 +45,7 @@ eqTheorem (PredN p xs) (PredN p' xs') = return (p == p' && xs == xs')
 eqTheorem (Or l r) (Or l' r') = (&&) <$> eqTheorem l l' <*> eqTheorem r r'
 eqTheorem (And l r) (And l' r') = (&&) <$> eqTheorem l l' <*> eqTheorem r r'
 eqTheorem (Not t) (Not t') = eqTheorem t t'
+eqTheorem (l :-> r) (l' :-> r') = (&&) <$> eqTheorem l l' <*> eqTheorem r r'
 eqTheorem (ForAll f) (ForAll f') = do
   x <- fresh
   eqTheorem (f x) (f' x)
@@ -63,6 +67,10 @@ showTheorem (And l r) = do
 showTheorem (Not t) = do
     st <- showTheorem t
     return ("!(" ++ st ++ ")")
+showTheorem (l :-> r) = do
+    sl <- showTheorem l
+    sr <- showTheorem r
+    return (sl ++ " -> " ++ sr)
 showTheorem (Var s) = return (show s)
 showTheorem (Pred1 p x) = return (show p ++ show x)
 showTheorem (Pred2 p xs) = return (show p ++ show xs)

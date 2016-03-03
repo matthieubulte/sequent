@@ -6,7 +6,8 @@ import           Control.Monad.Writer (tell)
 
 import           Sequent.Check        (Check, liftEnv)
 import           Sequent.Env          (fresh)
-import qualified Sequent.Proof    as P
+import qualified Sequent.Proof        as P
+import           Sequent.Theorem      (Theorem ((:->)))
 import qualified Sequent.Theorem      as T
 
 
@@ -44,6 +45,8 @@ check = runRule $ Rule logStep
               <|> Rule iAndElimSuccedent
               <|> Rule iAndElimRightAntecedent
               <|> Rule iAndElimLeftAntecedent
+              <|> Rule iImplicationAntecedent
+              <|> Rule iImplicationSuccedent
               <|> Rule iPermuteSuccedent
               <|> Rule iPermuteAntecedent
 
@@ -171,6 +174,25 @@ iAndElimRightAntecedent :: InferenceRule
 iAndElimRightAntecedent (P.AndElimRightAntecedent rest) (T.And a b:gamma, delta) =
     check rest (b:gamma, delta)
 iAndElimRightAntecedent _ _ = mzero
+
+{-
+    Gamma, A |- B, Delta
+--------------------------- right implication
+   Gamma |- A -> B, Delta
+-}
+iImplicationSuccedent :: InferenceRule
+iImplicationSuccedent (P.ImplicationSuccedent rest) (gamma, a :-> b:delta) =
+    check rest (a:gamma, b:delta)
+
+{-
+    Sigma |- A, Pi   Gamma, B |- Delta
+----------------------------------------- left implication
+   Gamma, Sigma, A -> B |- Delta, Pi
+-}
+iImplicationAntecedent :: InferenceRule
+iImplicationAntecedent (P.ImplicationAntecedent aProof bProof) (a :-> b:gammaSigma, deltaPi) = do
+    check aProof (gammaSigma, a:deltaPi)
+    check bProof (b:gammaSigma, deltaPi)
 
 {-
     Gamma |- B, A, Delta
