@@ -10,8 +10,7 @@ import qualified Sequent.Proof        as P
 import           Sequent.Theorem      (Theorem ((:->)))
 import qualified Sequent.Theorem      as T
 
-
--- TODO this seems to be a lot of work just to have monoidal functions
+-- TODO this seems to be a lot of work just to have monadplus-able functions
 newtype Rule a = Rule { runRule :: IRule a }
 type IRule a = (P.Proof -> T.Judgment -> Check a)
 type InferenceRule = IRule ()
@@ -31,24 +30,27 @@ instance Alternative Rule where
 logStep :: InferenceRule
 logStep step theorem = tell (show (step, theorem)) >> mzero
 
+thenR :: Rule () -> InferenceRule -> Rule ()
+thenR l r = l <|> Rule r
+
 check :: InferenceRule
 check = runRule $ Rule logStep
-              <|> Rule iAxiom
-              <|> Rule iContractionSuccedent
-              <|> Rule iForAllSuccedent
-              <|> Rule iForAllAntecedent
-              <|> Rule iOrElimLeftSuccedent
-              <|> Rule iOrElimRightSuccedent
-              <|> Rule iNegationSuccedent
-              <|> Rule iNegationAntecedent
-              <|> Rule iOrElimAntecedent
-              <|> Rule iAndElimSuccedent
-              <|> Rule iAndElimRightAntecedent
-              <|> Rule iAndElimLeftAntecedent
-              <|> Rule iImplicationAntecedent
-              <|> Rule iImplicationSuccedent
-              <|> Rule iPermuteSuccedent
-              <|> Rule iPermuteAntecedent
+               `thenR` iAxiom
+               `thenR` iContractionSuccedent
+               `thenR` iForAllSuccedent
+               `thenR` iForAllAntecedent
+               `thenR` iOrElimLeftSuccedent
+               `thenR` iOrElimRightSuccedent
+               `thenR` iNegationSuccedent
+               `thenR` iNegationAntecedent
+               `thenR` iOrElimAntecedent
+               `thenR` iAndElimSuccedent
+               `thenR` iAndElimRightAntecedent
+               `thenR` iAndElimLeftAntecedent
+               `thenR` iImplicationAntecedent
+               `thenR` iImplicationSuccedent
+               `thenR` iPermuteSuccedent
+               `thenR` iPermuteAntecedent
 
 {-
 
