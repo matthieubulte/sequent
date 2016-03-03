@@ -2,16 +2,15 @@ module Sequent.Proof
     ( Proof(..)
     ) where
 
-import           Control.Arrow ((&&&))
-import           Control.Monad (zipWithM)
-import           Data.List     (intercalate)
+import           Control.Arrow   ((&&&))
 
-import           Sequent.Env   (Env, Variable, evalEnv, fresh)
+import           Sequent.Env     (Env, Variable, evalEnv, fresh)
+import           Sequent.Theorem (Term)
 
 data Proof
   = ContractionSuccedent Proof
   | ForAllSuccedent (Variable -> Proof)
-  | ForAllAntecedent Variable Proof
+  | ForAllAntecedent Term Proof
   | OrElimLeftSuccedent Proof
   | OrElimRightSuccedent Proof
   | NegationSuccedent Proof

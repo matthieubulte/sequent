@@ -2,7 +2,8 @@ module Main where
 
 import           Sequent (checkDeMorganAnd, checkDeMorganOr,
                           checkExcludedMiddle, checkNestedForAll,
-                          checkOrCommutative, checkTrivialOr)
+                          checkOrCommutative, checkTheoremWithPredicateIntro,
+                          checkTrivialOr)
 
 showCheck :: String -> (Maybe (), String) -> IO ()
 showCheck theorem (result, trace) = do
@@ -19,3 +20,4 @@ main = do
     showCheck "de morgan over or" checkDeMorganOr
     showCheck "de morgan over and" checkDeMorganAnd
     showCheck "nested forall" checkNestedForAll
+    showCheck "introduce with predicate" checkTheoremWithPredicateIntro

@@ -1,8 +1,6 @@
 module Sequent where
 
-import           Control.Arrow       ((&&&))
-import           Control.Monad.Trans (lift)
-import           Data.Monoid         ((<>))
+import           Control.Arrow     ((&&&))
 
 import           Sequent.Check
 import           Sequent.Env
@@ -18,7 +16,7 @@ runProof judgmentProof = evalCheck $ do
     check proof judgment
 
 excludedMiddle :: Variable -> Judgment
-excludedMiddle a = [] |- [Var a `Or` Not (Var a)]
+excludedMiddle a = [] |- [TTerm (Var a) `Or` Not (TTerm (Var a))]
 
 proofExcludedMiddle :: Proof
 proofExcludedMiddle
@@ -28,33 +26,39 @@ proofExcludedMiddle
       $ OrElimRightSuccedent
       $ NegationSuccedent Axiom
 
+checkExcludedMiddle :: (Maybe (), String)
 checkExcludedMiddle = runProof (excludedMiddle &&& const proofExcludedMiddle)
 
 
 trivialOr :: (Variable, Variable) -> Judgment
-trivialOr (a, b) = [Var a `Or` Var b] |- [Var a `Or` Var b]
+trivialOr (a, b) = [TTerm (Var a) `Or` TTerm (Var b)]
+                |- [TTerm (Var a) `Or` TTerm (Var b)]
 
 proofTrivialOr :: Proof
 proofTrivialOr = OrElimAntecedent
                     (OrElimLeftSuccedent Axiom)
                     (OrElimRightSuccedent Axiom)
 
+checkTrivialOr :: (Maybe (), String)
 checkTrivialOr = runProof (trivialOr &&& const proofTrivialOr)
 
 
 orCommutative :: (Variable, Variable) -> Judgment
-orCommutative (a, b) = [Var a `Or` Var b] |- [Var b `Or` Var a]
+orCommutative (a, b) = [TTerm (Var a) `Or` TTerm (Var b)]
+                    |- [TTerm (Var b) `Or` TTerm (Var a)]
 
 proofOrCommutative :: Proof
 proofOrCommutative = OrElimAntecedent
                             (OrElimRightSuccedent Axiom)
                             (OrElimLeftSuccedent Axiom)
 
+checkOrCommutative :: (Maybe (), String)
 checkOrCommutative = runProof (orCommutative &&& const proofOrCommutative)
 
 
 deMorganOr :: (Variable, Variable) -> Judgment
-deMorganOr (a, b) = [Not (Var a `And` Var b)] |- [Not (Var a) `Or` Not (Var b)]
+deMorganOr (a, b) = [Not (TTerm (Var a) `And` TTerm (Var b))]
+                 |- [Not (TTerm $ Var a) `Or` Not (TTerm $ Var b)]
 
 proofDeMorganOr :: Proof
 proofDeMorganOr = NegationAntecedent
@@ -66,11 +70,13 @@ proofDeMorganOr = NegationAntecedent
                     $ OrElimRightSuccedent
                     $ NegationSuccedent Axiom )
 
+checkDeMorganOr :: (Maybe (), String)
 checkDeMorganOr = runProof (deMorganOr &&& const proofDeMorganOr)
 
 
 deMorganAnd :: (Variable, Variable) -> Judgment
-deMorganAnd (a, b) = [Not (Var a `Or` Var b)] |- [Not (Var a) `And` Not (Var b)]
+deMorganAnd (a, b) = [Not (TTerm (Var a) `Or` TTerm (Var b))]
+                  |- [Not (TTerm $ Var a) `And` Not (TTerm $ Var b)]
 
 proofDeMorganAnd :: Proof
 proofDeMorganAnd = NegationAntecedent
@@ -81,16 +87,32 @@ proofDeMorganAnd = NegationAntecedent
                     ( NegationSuccedent
                     $ OrElimRightSuccedent Axiom )
 
+checkDeMorganAnd :: (Maybe (), String)
 checkDeMorganAnd = runProof (deMorganAnd &&& const proofDeMorganAnd)
 
-nestedForAll :: Variable -> Judgment
-nestedForAll p = [ForAll $ \a -> ForAll $ \b -> Pred2 p (a, b)]
-              |- [ForAll $ \b -> ForAll $ \a -> Pred2 p (a, b)]
+nestedForAll :: Predicate2 -> Judgment
+nestedForAll p = [ForAll $ \a -> ForAll $ \b -> TTerm $ App2 p (a, b)]
+              |- [ForAll $ \b -> ForAll $ \a -> TTerm $ App2 p (a, b)]
 
-proofNestedForAll :: Variable -> Proof
-proofNestedForAll p = ForAllSuccedent $ \b ->
+proofNestedForAll :: Predicate2 -> Proof
+proofNestedForAll _ = ForAllSuccedent $ \b ->
                       ForAllSuccedent $ \a ->
-                          ForAllAntecedent a
-                        $ ForAllAntecedent b Axiom
+                          ForAllAntecedent (Var a)
+                        $ ForAllAntecedent (Var b) Axiom
 
+checkNestedForAll :: (Maybe (), String)
 checkNestedForAll = runProof (nestedForAll &&& proofNestedForAll)
+
+
+
+theoremWithPredicateIntro :: (Predicate1, Predicate1) -> Judgment
+theoremWithPredicateIntro (p, f) = [ForAll $ \x -> TTerm $ App1 p (App1 f x)]
+                                |- [ForAll $ \x -> TTerm $ App1 p (App1 f (App1 f x))]
+
+proofTheoremWithPredicateIntro :: (Predicate1, Predicate1) -> Proof
+proofTheoremWithPredicateIntro (_, f) = ForAllSuccedent $ \x ->
+                                        ForAllAntecedent (App1 f (Var x)) Axiom
+
+checkTheoremWithPredicateIntro :: (Maybe (), String)
+checkTheoremWithPredicateIntro = runProof ( theoremWithPredicateIntro
+                                        &&& proofTheoremWithPredicateIntro)

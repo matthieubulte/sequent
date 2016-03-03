@@ -18,7 +18,7 @@ import           Control.Monad.Writer      (MonadWriter, WriterT, listen, pass,
                                             runWriterT, tell)
 import           Data.Functor.Identity     (Identity, runIdentity)
 
-import           Sequent.Env               (EnvT, Variable, evalEnvT, fresh)
+import           Sequent.Env               (EnvT, evalEnvT)
 
 -- Wrapper around String to add a new line between two non-empty lines
 -- when appending them together

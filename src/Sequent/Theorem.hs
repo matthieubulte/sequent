@@ -1,24 +1,53 @@
 module Sequent.Theorem
     ( Theorem(..)
     , Judgment
+    , Predicate1
+    , Predicate2
+    , PredicateN
+    , Term(..)
     , (|-)
     ) where
 
-import           Sequent.Env (Env, Variable, evalEnv, fresh)
+import           Data.List         (intercalate)
+import           Sequent.Env       (Env, Variable, evalEnv)
+import           Sequent.Introduce (Introduce, introduce)
 
 infix :->
 
+-- Variable is the name of the predicate
+newtype Predicate1 = Predicate1 Variable deriving (Show, Eq)
+newtype Predicate2 = Predicate2 Variable deriving (Show, Eq)
+newtype PredicateN = PredicateN Variable deriving (Show, Eq)
+
+instance Introduce Predicate1 where
+    introduce = Predicate1 <$> introduce
+
+instance Introduce Predicate2 where
+    introduce = Predicate2 <$> introduce
+
+instance Introduce Term where
+    introduce = Var <$> introduce
+
+data Term = Var Variable
+          | App1 Predicate1 Term
+          | App2 Predicate2 (Term, Term)
+          | AppN PredicateN [Term]
+          deriving (Eq)
+
+instance Show Term where
+    show (Var v) = show v
+    show (App1 p t) = show p ++ "(" ++ show t ++ ")"
+    show (App2 p ts) = show p ++ show ts
+    show (AppN p ts) = show p ++ "(" ++ intercalate ", " (fmap show ts) ++ ")"
+
 -- TODO: add missing stuff
 data Theorem
-    = ForAll (Variable -> Theorem)
+    = ForAll (Term -> Theorem)
     | Or Theorem Theorem
     | And Theorem Theorem
     | Not Theorem
     | Theorem :-> Theorem
-    | Var Variable
-    | Pred1 Variable Variable             -- first variable is the predicate name
-    | Pred2 Variable (Variable, Variable) -- first variable is the predicate name
-    | PredN Variable [Variable]           -- first variable is the predicate name
+    | TTerm Term
 
 instance Eq Theorem where
   a == b = evalEnv (eqTheorem a b)
@@ -31,6 +60,8 @@ type Judgment = ([Theorem], [Theorem])
 
 -- TODO fix infix
 infixr |-
+
+(|-) :: [Theorem] -> [Theorem] -> Judgment
 (|-) = (,)
 
 -- to show or test equality of two theorems we must be able to replace
@@ -38,22 +69,19 @@ infixr |-
 -- in our haskell representation of the theorem and explore the subtheorem
 
 eqTheorem :: Theorem -> Theorem -> Env Bool
-eqTheorem (Var x) (Var y) = return (x == y)
-eqTheorem (Pred1 p x) (Pred1 p' x') = return (p == p' && x == x')
-eqTheorem (Pred2 p xs) (Pred2 p' xs') = return (p == p' && xs == xs')
-eqTheorem (PredN p xs) (PredN p' xs') = return (p == p' && xs == xs')
+eqTheorem (TTerm x) (TTerm y) = return (x == y)
 eqTheorem (Or l r) (Or l' r') = (&&) <$> eqTheorem l l' <*> eqTheorem r r'
 eqTheorem (And l r) (And l' r') = (&&) <$> eqTheorem l l' <*> eqTheorem r r'
 eqTheorem (Not t) (Not t') = eqTheorem t t'
 eqTheorem (l :-> r) (l' :-> r') = (&&) <$> eqTheorem l l' <*> eqTheorem r r'
 eqTheorem (ForAll f) (ForAll f') = do
-  x <- fresh
+  x <- introduce
   eqTheorem (f x) (f' x)
 eqTheorem _ _ = return False
 
 showTheorem :: Theorem -> Env String
 showTheorem (ForAll f) = do
-    x <- fresh
+    x <- introduce
     t <- showTheorem (f x)
     return ("forall " ++ show x ++ ". " ++ t)
 showTheorem (Or l r) = do
@@ -71,7 +99,4 @@ showTheorem (l :-> r) = do
     sl <- showTheorem l
     sr <- showTheorem r
     return (sl ++ " -> " ++ sr)
-showTheorem (Var s) = return (show s)
-showTheorem (Pred1 p x) = return (show p ++ show x)
-showTheorem (Pred2 p xs) = return (show p ++ show xs)
-showTheorem (PredN p xs) = return (show p ++ show xs)
+showTheorem (TTerm t) = return (show t)

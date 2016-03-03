@@ -12,7 +12,7 @@ module Sequent.Env
 
 import           Control.Monad.State.Lazy (MonadState, StateT, evalStateT, get,
                                            modify)
-import           Control.Monad.Trans      (MonadTrans, lift)
+import           Control.Monad.Trans      (MonadTrans)
 import           Control.Monad.Writer     (MonadWriter)
 import           Data.Functor.Identity    (Identity, runIdentity)
 

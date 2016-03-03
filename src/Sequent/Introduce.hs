@@ -1,10 +1,10 @@
 module Sequent.Introduce
     ( Introduce
+    , introduce
     , runIntros
     ) where
 
-import           Sequent.Env     (EnvT, Variable, fresh)
-import           Sequent.Theorem (Theorem)
+import           Sequent.Env (EnvT, Variable, fresh)
 
 -- Introduce represent a value that can be generated in an environment
 -- it can actually only be variables, but we want to be able to generate
@@ -17,7 +17,7 @@ instance Introduce () where
   introduce = return ()
 
 instance Introduce Variable where
-    introduce = fresh
+  introduce = fresh
 
 instance (Introduce a, Introduce b) => Introduce (a, b) where
     introduce = (,) <$> introduce <*> introduce
