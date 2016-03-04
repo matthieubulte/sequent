@@ -4,7 +4,7 @@
 {-# LANGUAGE UndecidableInstances       #-}
 
 module Sequent.Env
-    ( Variable
+    ( Variable(..)
     , EnvT, evalEnvT
     , Env, evalEnv
     , fresh

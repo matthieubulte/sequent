@@ -9,6 +9,9 @@ import           Sequent.Theorem (Term)
 
 data Proof
   = ContractionSuccedent Proof
+  | ContractionAntecedent Proof
+  | WeakenAntecedent Proof
+  | WeakenSuccedent Proof
   | ForAllSuccedent (Variable -> Proof)
   | ForAllAntecedent Term Proof
   | OrElimLeftSuccedent Proof
@@ -29,7 +32,7 @@ instance Eq Proof where
     a == b = evalEnv (eqProofs a b)
 
 instance Show Proof where
-    show = evalEnv . showProof
+    show = showProof
 
 -- to show or test equality of two theorems we must be able to replace
 -- quantifiers with contrete variables in order to eliminate functions
@@ -41,6 +44,9 @@ eqBranch l r l' r' = (&&) <$> eqProofs l l' <*> eqProofs r r'
 eqProofs :: Proof -> Proof -> Env Bool
 eqProofs Axiom Axiom = return True
 eqProofs (ContractionSuccedent s)   (ContractionSuccedent s')   = eqProofs s s'
+eqProofs (ContractionAntecedent s)  (ContractionAntecedent s')  = eqProofs s s'
+eqProofs (WeakenSuccedent s)        (WeakenSuccedent s')        = eqProofs s s'
+eqProofs (WeakenAntecedent s)       (WeakenAntecedent s')       = eqProofs s s'
 eqProofs (OrElimLeftSuccedent s)    (OrElimLeftSuccedent s')    = eqProofs s s'
 eqProofs (OrElimRightSuccedent s)   (OrElimRightSuccedent s')   = eqProofs s s'
 eqProofs (NegationSuccedent s)      (NegationSuccedent s')      = eqProofs s s'
@@ -59,32 +65,23 @@ eqProofs (AndElimSuccedent l r)      (AndElimSuccedent l' r')      = eqBranch l 
 eqProofs (ImplicationAntecedent l r) (ImplicationAntecedent l' r') = eqBranch l r l' r'
 eqProofs _ _ = return False
 
-thenShow :: String -> Proof -> Env String
-thenShow s p = ((s ++ "\n") ++) <$> showProof p
-
-showBranch :: String -> Proof -> Proof -> Env String
-showBranch s l r = do
-    showL <- showProof l
-    showR <- showProof r
-    return (s ++ " (" ++ showL ++ ") (" ++ showR ++ ")")
-
-showProof :: Proof -> Env String
-showProof Axiom                      = return "Axiom"
-showProof (ContractionSuccedent s)   = "ContractionSuccedent"          `thenShow` s
-showProof (ForAllAntecedent a s)     = ("ForAllAntecedent " ++ show a) `thenShow` s
-showProof (OrElimLeftSuccedent s)    = "OrElimLeftSuccedent"           `thenShow` s
-showProof (OrElimRightSuccedent s)   = "OrElimRightSuccedent"          `thenShow` s
-showProof (NegationSuccedent s)      = "NegationSuccedent"             `thenShow` s
-showProof (NegationAntecedent s)     = "NegationAntecedent"            `thenShow` s
-showProof (AndElimLeftAntecedent s)  = "AndElimLeftAntecedent"         `thenShow` s
-showProof (AndElimRightAntecedent s) = "AndElimRightAntecedent"        `thenShow` s
-showProof (PermuteSuccedent s)       = "PermuteSuccedent"              `thenShow` s
-showProof (PermuteAntecedent s)      = "PermuteAntecedent"             `thenShow` s
-showProof (ImplicationSuccedent s)   = "ImplicationSuccedent"          `thenShow` s
-showProof (ForAllSuccedent f) = do
-    x      <- fresh
-    shownF <- showProof (f x)
-    return $ "ForAllSuccedent (" ++ show x ++ " -> " ++ shownF ++ ")"
-showProof (OrElimAntecedent l r) = showBranch "OrElimAntecedent" l r
-showProof (AndElimSuccedent l r) =  showBranch "AndElimSuccedent" l r
-showProof (ImplicationAntecedent l r) = showBranch "ImplicationAntecedent" l r
+showProof :: Proof -> String
+showProof Axiom                       = "Axiom"
+showProof (ContractionSuccedent _)    = "ContractionSuccedent"
+showProof (ContractionAntecedent _)   = "ContractionAntecedent"
+showProof (WeakenSuccedent _)         = "WeakenSuccedent"
+showProof (WeakenAntecedent _)        = "WeakenAntecedent"
+showProof (ForAllAntecedent a _)      = "ForAllAntecedent " ++ show a
+showProof (OrElimLeftSuccedent _)     = "OrElimLeftSuccedent"
+showProof (OrElimRightSuccedent _)    = "OrElimRightSuccedent"
+showProof (NegationSuccedent _)       = "NegationSuccedent"
+showProof (NegationAntecedent _)      = "NegationAntecedent"
+showProof (AndElimLeftAntecedent _)   = "AndElimLeftAntecedent"
+showProof (AndElimRightAntecedent _)  = "AndElimRightAntecedent"
+showProof (PermuteSuccedent _)        = "PermuteSuccedent"
+showProof (PermuteAntecedent _)       = "PermuteAntecedent"
+showProof (ImplicationSuccedent _)    = "ImplicationSuccedent"
+showProof (ForAllSuccedent _)         = "ForAllSuccedent"
+showProof (OrElimAntecedent _ _)      = "OrElimAntecedent"
+showProof (AndElimSuccedent _ _)      = "AndElimSuccedent"
+showProof (ImplicationAntecedent _ _) = "ImplicationAntecedent"

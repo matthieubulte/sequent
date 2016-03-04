@@ -116,3 +116,29 @@ proofTheoremWithPredicateIntro (_, f) = ForAllSuccedent $ \x ->
 checkTheoremWithPredicateIntro :: (Maybe (), String)
 checkTheoremWithPredicateIntro = runProof ( theoremWithPredicateIntro
                                         &&& proofTheoremWithPredicateIntro)
+
+
+theoremDoublePredicate :: (Predicate1, Predicate1) -> Judgment
+theoremDoublePredicate (p, f) = [ForAll $ \x -> TTerm (App1 p x) :-> TTerm (App1 p (App1 f x))]
+                             |- [ForAll $ \x -> TTerm (App1 p x) :-> TTerm (App1 p (App1 f (App1 f x)))]
+
+proofTheoremDoublePredicate :: (Predicate1, Predicate1) -> Proof
+proofTheoremDoublePredicate (_, f) = ContractionAntecedent
+                                   $ ForAllSuccedent $ \x ->
+                                        ImplicationSuccedent
+                                      $ PermuteAntecedent
+                                      $ ForAllAntecedent (Var x)
+                                      $ ImplicationAntecedent
+                                              Axiom
+                                              ( PermuteAntecedent
+                                              $ WeakenAntecedent
+                                              $ PermuteAntecedent
+                                              $ ForAllAntecedent (App1 f (Var x))
+                                              $ ImplicationAntecedent
+                                                    Axiom
+                                                    Axiom
+                                              )
+
+checkTheoremDoublePredicate :: (Maybe (), String)
+checkTheoremDoublePredicate = runProof ( theoremDoublePredicate
+                                     &&& proofTheoremDoublePredicate)

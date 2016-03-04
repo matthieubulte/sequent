@@ -2,14 +2,14 @@ module Main where
 
 import           Sequent (checkDeMorganAnd, checkDeMorganOr,
                           checkExcludedMiddle, checkNestedForAll,
-                          checkOrCommutative, checkTheoremWithPredicateIntro,
-                          checkTrivialOr)
+                          checkOrCommutative, checkTheoremDoublePredicate,
+                          checkTheoremWithPredicateIntro, checkTrivialOr)
 
 showCheck :: String -> (Maybe (), String) -> IO ()
 showCheck theorem (result, trace) = do
-    putStrLn ("'" ++ theorem ++ "' success: " ++ maybe "No" (const "Yes") result)
-    putStrLn ("Trace:\n" ++ trace)
-
+    putStrLn (theorem ++ "\n")
+    putStrLn trace
+    putStrLn (maybe "Failed" (const "Succeeded") result)
     putStrLn "--------------------------------"
 
 main :: IO ()
@@ -21,3 +21,4 @@ main = do
     showCheck "de morgan over and" checkDeMorganAnd
     showCheck "nested forall" checkNestedForAll
     showCheck "introduce with predicate" checkTheoremWithPredicateIntro
+    showCheck "double predicate implication" checkTheoremDoublePredicate

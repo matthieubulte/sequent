@@ -9,15 +9,24 @@ module Sequent.Theorem
     ) where
 
 import           Data.List         (intercalate)
-import           Sequent.Env       (Env, Variable, evalEnv)
+import           Sequent.Env       (Env, Variable (..), evalEnv)
 import           Sequent.Introduce (Introduce, introduce)
 
 infix :->
 
 -- Variable is the name of the predicate
-newtype Predicate1 = Predicate1 Variable deriving (Show, Eq)
-newtype Predicate2 = Predicate2 Variable deriving (Show, Eq)
-newtype PredicateN = PredicateN Variable deriving (Show, Eq)
+newtype Predicate1 = Predicate1 Variable deriving (Eq)
+newtype Predicate2 = Predicate2 Variable deriving (Eq)
+newtype PredicateN = PredicateN Variable deriving (Eq)
+
+instance Show Predicate1 where
+    show (Predicate1 (Variable x)) = "P" ++ show x
+
+instance Show Predicate2 where
+    show (Predicate2 (Variable x)) = "P" ++ show x
+
+instance Show PredicateN where
+    show (PredicateN (Variable x)) = "P" ++ show x
 
 instance Introduce Predicate1 where
     introduce = Predicate1 <$> introduce

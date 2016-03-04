@@ -28,7 +28,11 @@ instance Alternative Rule where
 
 
 logStep :: InferenceRule
-logStep step theorem = tell (show (step, theorem)) >> mzero
+logStep step (antecedent, succedent) = do
+    tell (show antecedent ++ " |- " ++ show succedent)
+    tell (show step)
+    tell " "
+    mzero
 
 thenR :: Rule () -> InferenceRule -> Rule ()
 thenR l r = l <|> Rule r
@@ -37,6 +41,9 @@ check :: InferenceRule
 check = runRule $ Rule logStep
                `thenR` iAxiom
                `thenR` iContractionSuccedent
+               `thenR` iContractionAntecedent
+               `thenR` iWeakenSuccedent
+               `thenR` iWeakenAntecedent
                `thenR` iForAllSuccedent
                `thenR` iForAllAntecedent
                `thenR` iOrElimLeftSuccedent
@@ -72,6 +79,36 @@ iContractionSuccedent (P.ContractionSuccedent rest) (gamma, a:delta) =
 iContractionSuccedent _ _ = mzero
 
 {-
+   Gamma, A, A |- Delta
+-------------------------- contract left
+    Gamma, A |- Delta
+-}
+iContractionAntecedent :: InferenceRule
+iContractionAntecedent (P.ContractionAntecedent rest) (a:gamma, delta) =
+    check rest (a:a:gamma, delta)
+iContractionAntecedent _ _ = mzero
+
+{-
+      Gamma |- Delta
+-------------------------- weaken right
+    Gamma |- _, Delta
+-}
+iWeakenSuccedent :: InferenceRule
+iWeakenSuccedent (P.WeakenSuccedent rest) (gamma, _:delta) =
+    check rest (gamma, delta)
+iWeakenSuccedent _ _ = mzero
+
+{-
+      Gamma |- Delta
+-------------------------- weaken left
+    Gamma, _ |- Delta
+-}
+iWeakenAntecedent :: InferenceRule
+iWeakenAntecedent (P.WeakenAntecedent rest) (_:gamma, delta) =
+    check rest (gamma, delta)
+iWeakenAntecedent _ _ = mzero
+
+{-
      Gamma |- A[y/x], Delta
 -------------------------------- forall right
    Gamma |- forall x. A, Delta
@@ -85,7 +122,7 @@ iForAllSuccedent _ _ = mzero
 {-
      Gamma, A[y/x] |- Delta
 -------------------------------- forall right
-   Gamma |- forall x. A, Delta
+   Gamma, forall x. A |- Delta
 -}
 iForAllAntecedent :: InferenceRule
 iForAllAntecedent (P.ForAllAntecedent y rest) (T.ForAll f:gamma, delta) =
