@@ -1,53 +1,14 @@
 module Sequent.Theorem
     ( Theorem(..)
     , Judgment
-    , Predicate1
-    , Predicate2
-    , PredicateN
-    , Term(..)
     , (|-)
     ) where
 
-import           Data.List         (intercalate)
-import           Sequent.Env       (Env, Variable (..), evalEnv)
-import           Sequent.Introduce (Introduce, introduce)
+import           Sequent.Env       (Env, evalEnv)
+import           Sequent.Introduce (introduce)
+import           Sequent.Term      (Term)
 
 infix :->
-
--- Variable is the name of the predicate
-newtype Predicate1 = Predicate1 Variable deriving (Eq)
-newtype Predicate2 = Predicate2 Variable deriving (Eq)
-newtype PredicateN = PredicateN Variable deriving (Eq)
-
-instance Show Predicate1 where
-    show (Predicate1 (Variable x)) = "P" ++ show x
-
-instance Show Predicate2 where
-    show (Predicate2 (Variable x)) = "P" ++ show x
-
-instance Show PredicateN where
-    show (PredicateN (Variable x)) = "P" ++ show x
-
-instance Introduce Predicate1 where
-    introduce = Predicate1 <$> introduce
-
-instance Introduce Predicate2 where
-    introduce = Predicate2 <$> introduce
-
-instance Introduce Term where
-    introduce = Var <$> introduce
-
-data Term = Var Variable
-          | App1 Predicate1 Term
-          | App2 Predicate2 (Term, Term)
-          | AppN PredicateN [Term]
-          deriving (Eq)
-
-instance Show Term where
-    show (Var v) = show v
-    show (App1 p t) = show p ++ "(" ++ show t ++ ")"
-    show (App2 p ts) = show p ++ show ts
-    show (AppN p ts) = show p ++ "(" ++ intercalate ", " (fmap show ts) ++ ")"
 
 -- TODO: add missing stuff
 data Theorem

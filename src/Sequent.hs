@@ -3,10 +3,10 @@ module Sequent where
 import           Control.Arrow     ((&&&))
 
 import           Sequent.Check
-import           Sequent.Env
 import           Sequent.Inference
 import           Sequent.Introduce
 import           Sequent.Proof
+import           Sequent.Term
 import           Sequent.Theorem
 
 -- TODO Move me :()
@@ -97,8 +97,8 @@ nestedForAll p = [ForAll $ \a -> ForAll $ \b -> TTerm $ App2 p (a, b)]
 proofNestedForAll :: Predicate2 -> Proof
 proofNestedForAll _ = ForAllSuccedent $ \b ->
                       ForAllSuccedent $ \a ->
-                          ForAllAntecedent (Var a)
-                        $ ForAllAntecedent (Var b) Axiom
+                          ForAllAntecedent a
+                        $ ForAllAntecedent b Axiom
 
 checkNestedForAll :: (Maybe (), String)
 checkNestedForAll = runProof (nestedForAll &&& proofNestedForAll)
@@ -111,7 +111,7 @@ theoremWithPredicateIntro (p, f) = [ForAll $ \x -> TTerm $ App1 p (App1 f x)]
 
 proofTheoremWithPredicateIntro :: (Predicate1, Predicate1) -> Proof
 proofTheoremWithPredicateIntro (_, f) = ForAllSuccedent $ \x ->
-                                        ForAllAntecedent (App1 f (Var x)) Axiom
+                                        ForAllAntecedent (App1 f x) Axiom
 
 checkTheoremWithPredicateIntro :: (Maybe (), String)
 checkTheoremWithPredicateIntro = runProof ( theoremWithPredicateIntro
@@ -127,13 +127,13 @@ proofTheoremDoublePredicate (_, f) = ContractionAntecedent
                                    $ ForAllSuccedent $ \x ->
                                         ImplicationSuccedent
                                       $ PermuteAntecedent
-                                      $ ForAllAntecedent (Var x)
+                                      $ ForAllAntecedent x
                                       $ ImplicationAntecedent
                                               Axiom
                                               ( PermuteAntecedent
                                               $ WeakenAntecedent
                                               $ PermuteAntecedent
-                                              $ ForAllAntecedent (App1 f (Var x))
+                                              $ ForAllAntecedent (App1 f x)
                                               $ ImplicationAntecedent
                                                     Axiom
                                                     Axiom

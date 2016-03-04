@@ -2,17 +2,18 @@ module Sequent.Proof
     ( Proof(..)
     ) where
 
-import           Control.Arrow   ((&&&))
+import           Control.Arrow     ((&&&))
 
-import           Sequent.Env     (Env, Variable, evalEnv, fresh)
-import           Sequent.Theorem (Term)
+import           Sequent.Env       (Env, evalEnv)
+import           Sequent.Introduce (introduce)
+import           Sequent.Term      (Term)
 
 data Proof
   = ContractionSuccedent Proof
   | ContractionAntecedent Proof
   | WeakenAntecedent Proof
   | WeakenSuccedent Proof
-  | ForAllSuccedent (Variable -> Proof)
+  | ForAllSuccedent (Term -> Proof)
   | ForAllAntecedent Term Proof
   | OrElimLeftSuccedent Proof
   | OrElimRightSuccedent Proof
@@ -59,7 +60,7 @@ eqProofs (ImplicationSuccedent s)   (ImplicationSuccedent s')   = eqProofs s s'
 eqProofs (ForAllAntecedent a s)     (ForAllAntecedent a' s')    =
     (a == a' &&) <$> eqProofs s s'
 eqProofs (ForAllSuccedent f) (ForAllSuccedent f') =
-    fresh >>= uncurry eqProofs . (f &&& f')
+    introduce >>= uncurry eqProofs . (f &&& f')
 eqProofs (OrElimAntecedent l r)      (OrElimAntecedent l' r')      = eqBranch l r l' r'
 eqProofs (AndElimSuccedent l r)      (AndElimSuccedent l' r')      = eqBranch l r l' r'
 eqProofs (ImplicationAntecedent l r) (ImplicationAntecedent l' r') = eqBranch l r l' r'

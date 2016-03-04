@@ -116,7 +116,7 @@ iWeakenAntecedent _ _ = mzero
 iForAllSuccedent :: InferenceRule
 iForAllSuccedent (P.ForAllSuccedent t) (gamma, T.ForAll f:delta) = do
     y <- liftEnv introduce
-    check (t y) (gamma, f (T.Var y):delta)
+    check (t y) (gamma, f y:delta)
 iForAllSuccedent _ _ = mzero
 
 {-
