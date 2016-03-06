@@ -13,6 +13,7 @@ infix :->
 -- TODO: add missing stuff
 data Theorem
     = ForAll (Term -> Theorem)
+    | ThereExists (Term -> Theorem)
     | Or Theorem Theorem
     | And Theorem Theorem
     | Not Theorem
@@ -47,6 +48,9 @@ eqTheorem (l :-> r) (l' :-> r') = (&&) <$> eqTheorem l l' <*> eqTheorem r r'
 eqTheorem (ForAll f) (ForAll f') = do
   x <- introduce
   eqTheorem (f x) (f' x)
+eqTheorem (ThereExists f) (ThereExists f') = do
+    x <- introduce
+    eqTheorem (f x) (f' x)
 eqTheorem _ _ = return False
 
 showTheorem :: Theorem -> Env String
@@ -54,6 +58,10 @@ showTheorem (ForAll f) = do
     x <- introduce
     t <- showTheorem (f x)
     return ("forall " ++ show x ++ ". " ++ t)
+showTheorem (ThereExists f) = do
+    x <- introduce
+    t <- showTheorem (f x)
+    return ("there exists " ++ show x ++ ". " ++ t)
 showTheorem (Or l r) = do
     sl <- showTheorem l
     sr <- showTheorem r

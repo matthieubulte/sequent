@@ -46,6 +46,8 @@ check = runRule $ Rule logStep
                `thenR` iWeakenAntecedent
                `thenR` iForAllSuccedent
                `thenR` iForAllAntecedent
+               `thenR` iThereExistsSuccedent
+               `thenR` iThereExistsAntecedent
                `thenR` iOrElimLeftSuccedent
                `thenR` iOrElimRightSuccedent
                `thenR` iNegationSuccedent
@@ -121,13 +123,34 @@ iForAllSuccedent _ _ = mzero
 
 {-
      Gamma, A[y/x] |- Delta
--------------------------------- forall right
+-------------------------------- forall left
    Gamma, forall x. A |- Delta
 -}
 iForAllAntecedent :: InferenceRule
 iForAllAntecedent (P.ForAllAntecedent y rest) (T.ForAll f:gamma, delta) =
     check rest (f y:gamma, delta)
 iForAllAntecedent _ _ = mzero
+
+{-
+     Gamma |- A[y/x], Delta
+-------------------------------- forall right
+   Gamma |- there exists x. A, Delta
+-}
+iThereExistsSuccedent :: InferenceRule
+iThereExistsSuccedent (P.ThereExistsSuccedent y rest) (gamma, T.ThereExists f:delta) =
+    check rest (gamma, f y:delta)
+iThereExistsSuccedent _ _ = mzero
+
+{-
+     Gamma, A[y/x] |- Delta
+-------------------------------- forall left
+   Gamma, there exists x. A |- Delta
+-}
+iThereExistsAntecedent :: InferenceRule
+iThereExistsAntecedent (P.ThereExistsAntecedent t) (T.ThereExists f:gamma, delta) = do
+    y <- liftEnv introduce
+    check (t y) (f y:gamma, delta)
+iThereExistsAntecedent _ _ = mzero
 
 {-
        Gamma |- A, Delta

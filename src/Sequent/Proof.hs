@@ -15,6 +15,8 @@ data Proof
   | WeakenSuccedent Proof
   | ForAllSuccedent (Term -> Proof)
   | ForAllAntecedent Term Proof
+  | ThereExistsSuccedent Term Proof
+  | ThereExistsAntecedent (Term -> Proof)
   | OrElimLeftSuccedent Proof
   | OrElimRightSuccedent Proof
   | NegationSuccedent Proof
@@ -59,7 +61,11 @@ eqProofs (PermuteAntecedent s)      (PermuteAntecedent s')      = eqProofs s s'
 eqProofs (ImplicationSuccedent s)   (ImplicationSuccedent s')   = eqProofs s s'
 eqProofs (ForAllAntecedent a s)     (ForAllAntecedent a' s')    =
     (a == a' &&) <$> eqProofs s s'
+eqProofs (ThereExistsSuccedent a s) (ThereExistsSuccedent a' s') =
+    (a == a' &&) <$> eqProofs s s'
 eqProofs (ForAllSuccedent f) (ForAllSuccedent f') =
+    introduce >>= uncurry eqProofs . (f &&& f')
+eqProofs (ThereExistsAntecedent f) (ThereExistsAntecedent f') =
     introduce >>= uncurry eqProofs . (f &&& f')
 eqProofs (OrElimAntecedent l r)      (OrElimAntecedent l' r')      = eqBranch l r l' r'
 eqProofs (AndElimSuccedent l r)      (AndElimSuccedent l' r')      = eqBranch l r l' r'
@@ -73,6 +79,9 @@ showProof (ContractionAntecedent _)   = "ContractionAntecedent"
 showProof (WeakenSuccedent _)         = "WeakenSuccedent"
 showProof (WeakenAntecedent _)        = "WeakenAntecedent"
 showProof (ForAllAntecedent a _)      = "ForAllAntecedent " ++ show a
+showProof (ForAllSuccedent _)         = "ForAllSuccedent"
+showProof (ThereExistsSuccedent a _) = "ThereExistsSuccedent " ++ show a
+showProof (ThereExistsAntecedent _)  = "ThereExistsAntecedent"
 showProof (OrElimLeftSuccedent _)     = "OrElimLeftSuccedent"
 showProof (OrElimRightSuccedent _)    = "OrElimRightSuccedent"
 showProof (NegationSuccedent _)       = "NegationSuccedent"
@@ -82,7 +91,6 @@ showProof (AndElimRightAntecedent _)  = "AndElimRightAntecedent"
 showProof (PermuteSuccedent _)        = "PermuteSuccedent"
 showProof (PermuteAntecedent _)       = "PermuteAntecedent"
 showProof (ImplicationSuccedent _)    = "ImplicationSuccedent"
-showProof (ForAllSuccedent _)         = "ForAllSuccedent"
 showProof (OrElimAntecedent _ _)      = "OrElimAntecedent"
 showProof (AndElimSuccedent _ _)      = "AndElimSuccedent"
 showProof (ImplicationAntecedent _ _) = "ImplicationAntecedent"
