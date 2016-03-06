@@ -69,12 +69,12 @@ showTheorem (Or l r) = do
 showTheorem (And l r) = do
     sl <- showTheorem l
     sr <- showTheorem r
-    return (sl ++ "/\\ " ++ sr)
+    return (sl ++ " /\\ " ++ sr)
 showTheorem (Not t) = do
     st <- showTheorem t
     return ("!(" ++ st ++ ")")
 showTheorem (l :-> r) = do
     sl <- showTheorem l
     sr <- showTheorem r
-    return (sl ++ " -> " ++ sr)
+    return ("(" ++ sl ++ " -> " ++ sr ++ ")")
 showTheorem (TTerm t) = return (show t)

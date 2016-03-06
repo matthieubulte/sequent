@@ -1,6 +1,7 @@
 
 import           Control.Arrow ((&&&))
 import           Sequent       (Introduce, Judgment, Proof)
+import           Sequent.Sets
 import           Sequent.Tests
 import           Test.HUnit    (Counts, Test (..), assertBool, runTestTT)
 
@@ -18,4 +19,9 @@ main = runTestTT $ TestList
     , check "introduce with predicate" judgmentWithPredicateIntro proofJudgmentWithPredicateIntro
     , check "double predicate implication" doublePredicate proofDoublePredicate
     , check "exists forall -> forall exists" existsForAll proofExistsForAll
+    , check "contraposition" contraposition proofContraposition
+
+    -- toying with set theory
+    , check "set is subset of itself" subsetSymmetric proofSubsetSymmetric
+    , check "set is equal to itself" equalSymmetric proofEqualSymmetric
     ]

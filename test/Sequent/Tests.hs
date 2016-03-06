@@ -1,13 +1,15 @@
 module Sequent.Tests where
 
-import           Data.Maybe (isJust)
+import           Data.Maybe    (isJust)
 import           Sequent
 
 runProof :: Introduce a => (a -> (Judgment, Proof)) -> Bool
-runProof judgmentProof = isJust . fst . evalCheck $ do
+runProof = isJust . fst . evalProof
+
+evalProof :: Introduce a => (a -> (Judgment, Proof)) -> (Maybe (), String)
+evalProof judgmentProof = evalCheck $ do
     (judgment, proof) <- liftEnv (runIntros judgmentProof)
     check proof judgment
-
 
 excludedMiddle :: Variable -> Judgment
 excludedMiddle a = [] |- [TTerm (Var a) `Or` Not (TTerm (Var a))]
@@ -76,8 +78,8 @@ proofDeMorganAnd _ = NegationAntecedent
 --
 
 nestedForAll :: Predicate2 -> Judgment
-nestedForAll p = [ForAll $ \a -> ForAll $ \b -> TTerm $ App2 p (a, b)]
-              |- [ForAll $ \b -> ForAll $ \a -> TTerm $ App2 p (a, b)]
+nestedForAll p = [ForAll $ \a -> ForAll $ \b -> TTerm $ App2 p a b]
+              |- [ForAll $ \b -> ForAll $ \a -> TTerm $ App2 p a b]
 
 proofNestedForAll :: Predicate2 -> Proof
 proofNestedForAll _ = ForAllSuccedent $ \b ->
@@ -121,8 +123,8 @@ proofDoublePredicate (_, f) = ContractionAntecedent
 --
 
 existsForAll :: Predicate2 -> Judgment
-existsForAll p = [ThereExists $ \x -> ForAll $ \y -> TTerm (App2 p (x, y))]
-              |- [ForAll $ \y -> ThereExists $ \x -> TTerm (App2 p (x, y))]
+existsForAll p = [ThereExists $ \x -> ForAll $ \y -> TTerm (App2 p x y)]
+              |- [ForAll $ \y -> ThereExists $ \x -> TTerm (App2 p x y)]
 
 proofExistsForAll :: Predicate2 -> Proof
 proofExistsForAll _ = ForAllSuccedent $ \y ->
@@ -130,3 +132,17 @@ proofExistsForAll _ = ForAllSuccedent $ \y ->
                       ThereExistsSuccedent x $
                       ForAllAntecedent y
                       Axiom
+
+--
+
+contraposition :: (Term, Term) -> Judgment
+contraposition (a, b) = [TTerm a :-> TTerm b] |- [Not (TTerm b) :-> Not (TTerm a)]
+
+proofContraposition :: (Term, Term) -> Proof
+proofContraposition _ =
+    ImplicationAntecedent
+        ( PermuteSuccedent
+        $ ImplicationSuccedent
+        $ NegationSuccedent Axiom)
+        ( ImplicationSuccedent
+        $ NegationAntecedent Axiom)

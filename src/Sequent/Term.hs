@@ -47,7 +47,7 @@ instance Show PredicateN where
 -- A term is anything that can be introduced or passed to a quantifier
 data Term = Var Variable
           | App1 Predicate1 Term
-          | App2 Predicate2 (Term, Term)
+          | App2 Predicate2 Term Term
           | AppN PredicateN [Term]
           deriving (Eq)
 
@@ -57,5 +57,5 @@ instance Introduce Term where
 instance Show Term where
     show (Var v) = show v
     show (App1 p t) = show p ++ "(" ++ show t ++ ")"
-    show (App2 p ts) = show p ++ show ts
+    show (App2 p t1 t2) = show p ++ "(" ++ show t1 ++ ", " ++ show t2 ++ ")"
     show (AppN p ts) = show p ++ "(" ++ intercalate ", " (fmap show ts) ++ ")"

@@ -22,6 +22,11 @@ instance (Introduce a, Introduce b) => Introduce (a, b) where
 instance (Introduce a, Introduce b, Introduce c) => Introduce (a, b, c) where
     introduce = (,,) <$> introduce <*> introduce <*> introduce
 
+instance (Introduce a, Introduce b, Introduce c, Introduce d) => Introduce (a, b, c, d) where
+    introduce = (,,,) <$> introduce <*> introduce <*> introduce <*> introduce
+
+instance (Introduce a, Introduce b, Introduce c, Introduce d, Introduce e) => Introduce (a, b, c, d, e) where
+    introduce = (,,,,) <$> introduce <*> introduce <*> introduce <*> introduce <*> introduce
 -- Create the fresh variable required for a theorem to be expressed
 runIntros :: (Monad m, Introduce a) => (a -> b) -> EnvT m b
 runIntros f = f <$> introduce
