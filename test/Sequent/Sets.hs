@@ -54,3 +54,37 @@ proofEqualSymmetric (cont, subs, _, set) =
             (proofSubsetSymmetric (cont, subs, set))
         )
         Axiom
+
+
+boolSetContains :: (Predicate2, Term, Term, Term) -> Theorem
+boolSetContains (cont, set, true, false) =
+    let contains = ap cont
+    in
+        ForAll $ \x -> (set `contains` x) `equiv` (TTerm x `equiv` (TTerm true `Or` TTerm false))
+
+orOp :: (Predicate2, Term, Term) -> [Theorem]
+orOp (orS, true, false) =
+    let or' = ap orS
+    in
+        [ or' true  true  `equiv` TTerm true
+        , or' true  false `equiv` TTerm true
+        , or' false true  `equiv` TTerm true
+        , or' false false `equiv` TTerm false
+        ]
+
+orClosed :: (Predicate2, Predicate2, Term, Term, Term) -> Judgment
+orClosed (contains, or', bools, true, false) =
+    (boolSetContains (contains, bools, true, false) : orOp (or', true, false))
+    |-
+    [ForAll $ \x -> ForAll $ \y -> (inBools x `And` inBools y) :-> inBools (App2 or' x y)]
+
+    where
+        inBools :: Term -> Theorem
+        inBools = ap contains bools
+
+proofOrClosed :: (Predicate2, Predicate2, Term, Term, Term) -> Proof
+proofOrClosed (contains, or', bools, true, false) =
+    ForAllSuccedent $ \x ->
+    ForAllSuccedent $ \y ->
+          ImplicationSuccedent
+          Axiom

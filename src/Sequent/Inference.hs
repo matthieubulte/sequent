@@ -46,8 +46,8 @@ check = runRule $ Rule logStep
                `thenR` iWeakenAntecedent
                `thenR` iForAllSuccedent
                `thenR` iForAllAntecedent
-               `thenR` iThereExistsSuccedent
-               `thenR` iThereExistsAntecedent
+               `thenR` iForSomeSuccedent
+               `thenR` iForSomeAntecedent
                `thenR` iOrElimLeftSuccedent
                `thenR` iOrElimRightSuccedent
                `thenR` iNegationSuccedent
@@ -60,6 +60,8 @@ check = runRule $ Rule logStep
                `thenR` iImplicationSuccedent
                `thenR` iPermuteSuccedent
                `thenR` iPermuteAntecedent
+               `thenR` iRotateLeftAntecedent
+               `thenR` iRotateLeftSuccedent
 
 {-
 
@@ -136,21 +138,21 @@ iForAllAntecedent _ _ = mzero
 -------------------------------- forall right
    Gamma |- there exists x. A, Delta
 -}
-iThereExistsSuccedent :: InferenceRule
-iThereExistsSuccedent (P.ThereExistsSuccedent y rest) (gamma, T.ThereExists f:delta) =
+iForSomeSuccedent :: InferenceRule
+iForSomeSuccedent (P.ForSomeSuccedent y rest) (gamma, T.ForSome f:delta) =
     check rest (gamma, f y:delta)
-iThereExistsSuccedent _ _ = mzero
+iForSomeSuccedent _ _ = mzero
 
 {-
      Gamma, A[y/x] |- Delta
 -------------------------------- forall left
    Gamma, there exists x. A |- Delta
 -}
-iThereExistsAntecedent :: InferenceRule
-iThereExistsAntecedent (P.ThereExistsAntecedent t) (T.ThereExists f:gamma, delta) = do
+iForSomeAntecedent :: InferenceRule
+iForSomeAntecedent (P.ForSomeAntecedent t) (T.ForSome f:gamma, delta) = do
     y <- liftEnv introduce
     check (t y) (f y:gamma, delta)
-iThereExistsAntecedent _ _ = mzero
+iForSomeAntecedent _ _ = mzero
 
 {-
        Gamma |- A, Delta
@@ -274,3 +276,27 @@ iPermuteAntecedent :: InferenceRule
 iPermuteAntecedent (P.PermuteAntecedent rest) (a:b:gamma, delta) =
     check rest (b:a:gamma, delta)
 iPermuteAntecedent _ _ = mzero
+
+{-
+      A_2, ..., A_n, A_1 |- Delta
+    -------------------------------- rotate right left
+         A_1, ..., A_n |- Delta
+-}
+iRotateLeftAntecedent :: InferenceRule
+iRotateLeftAntecedent (P.RotateLeftAntecedent rest) (as, delta) =
+    check rest (rotate as, delta)
+iRotateLeftAntecedent _ _ = mzero
+
+{-
+       Gamma |- A_2, ..., A_n, A_1
+    -------------------------------- rotate right left
+         Gamma |- A_1, ..., A_n
+-}
+iRotateLeftSuccedent :: InferenceRule
+iRotateLeftSuccedent (P.RotateLeftSuccedent rest) (gamma, as) =
+    check rest (gamma, rotate as)
+iRotateLeftSuccedent _ _ = mzero
+
+rotate :: [a] -> [a]
+rotate [] = []
+rotate (a:as) = as ++ [a]

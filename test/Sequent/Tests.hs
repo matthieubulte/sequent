@@ -1,6 +1,6 @@
 module Sequent.Tests where
 
-import           Data.Maybe    (isJust)
+import           Data.Maybe (isJust)
 import           Sequent
 
 runProof :: Introduce a => (a -> (Judgment, Proof)) -> Bool
@@ -123,13 +123,13 @@ proofDoublePredicate (_, f) = ContractionAntecedent
 --
 
 existsForAll :: Predicate2 -> Judgment
-existsForAll p = [ThereExists $ \x -> ForAll $ \y -> TTerm (App2 p x y)]
-              |- [ForAll $ \y -> ThereExists $ \x -> TTerm (App2 p x y)]
+existsForAll p = [ForSome $ \x -> ForAll $ \y -> TTerm (App2 p x y)]
+              |- [ForAll $ \y -> ForSome $ \x -> TTerm (App2 p x y)]
 
 proofExistsForAll :: Predicate2 -> Proof
 proofExistsForAll _ = ForAllSuccedent $ \y ->
-                      ThereExistsAntecedent $ \x ->
-                      ThereExistsSuccedent x $
+                      ForSomeAntecedent $ \x ->
+                      ForSomeSuccedent x $
                       ForAllAntecedent y
                       Axiom
 
