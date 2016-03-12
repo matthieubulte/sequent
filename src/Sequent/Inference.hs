@@ -29,10 +29,23 @@ instance Alternative Rule where
 
 logStep :: InferenceRule
 logStep step (antecedent, succedent) = do
-    tell (show antecedent ++ " |- " ++ show succedent)
-    tell (show step)
-    tell " "
+    let longest [] = 0
+        longest xs = maximum (fmap length xs)
+
+    let ants  = fmap show antecedent
+    let sucs  = fmap show succedent
+
+    let l = max (longest ants) (longest sucs)
+
+    tell $ unlines ants
+        ++ "|" ++ replicate (l - 1) '-'
+    tell $ unlines sucs
+        ++ show step
+
+    tell "\n"
+
     mzero
+
 
 thenR :: Rule () -> InferenceRule -> Rule ()
 thenR l r = l <|> Rule r

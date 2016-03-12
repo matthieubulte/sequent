@@ -52,3 +52,7 @@ a &&& b = And (toTheorem a) (toTheorem b)
 
 not' :: (ToTheorem a) => a -> Theorem
 not' = Not . toTheorem
+
+rotateLeftAntecedent :: Int -> Proof -> Proof
+rotateLeftAntecedent 0 = id
+rotateLeftAntecedent n = RotateLeftAntecedent . rotateLeftAntecedent (n - 1)
