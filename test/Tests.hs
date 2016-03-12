@@ -1,12 +1,15 @@
 
 import           Control.Arrow ((&&&))
 import           Sequent       (Introduce, Judgment, Proof)
-import           Sequent.Sets
+import           Sequent.Peano
 import           Sequent.Tests
 import           Test.HUnit    (Counts, Test (..), assertBool, runTestTT)
 
+check' :: Introduce a => String -> (a -> (Judgment, Proof)) -> Test
+check' s f =  TestCase $ assertBool s (runProof f)
+
 check :: Introduce a => String -> (a -> Judgment) -> (a -> Proof) -> Test
-check s j p = TestCase $ assertBool s (runProof (j &&& p))
+check s j p = check' s (j &&& p)
 
 main :: IO Counts
 main = runTestTT $ TestList
@@ -21,7 +24,6 @@ main = runTestTT $ TestList
     , check "exists forall -> forall exists" existsForAll proofExistsForAll
     , check "contraposition" contraposition proofContraposition
 
-    -- toying with set theory
-    , check "set is subset of itself" subsetSymmetric proofSubsetSymmetric
-    , check "set is equal to itself" equalSymmetric proofEqualSymmetric
+    -- toying with peano arithmetic
+    , check' "zero has no predecessor" makeZeroHasNoPredecessor
     ]
